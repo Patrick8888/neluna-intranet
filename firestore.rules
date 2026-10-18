@@ -316,7 +316,7 @@ service cloud.firestore {
           && d.hunde is list && d.hunde.size() >= 1 && d.hunde.size() <= 10
           && d.zimmerId is string && d.zimmerId.matches('zimmer-[0-9]+')
           && datumOk(d, 'von') && datumOk(d, 'bis') && d.von <= d.bis
-          && d.status in ['Anfrage', 'Bestätigt', 'Eingecheckt', 'Abgereist', 'Storniert']
+          && d.status in ['Anfrage', 'Bestätigt', 'Eingecheckt', 'Abgeholt', 'Storniert']
           && d.leistungen is list && d.leistungen.size() <= 10
           && betrag(d, 'preis') && betrag(d, 'betrag') && d.bezahlt is bool
           && d.zahlungsart in ['', 'Bar', 'Karte', 'TWINT', 'Rechnung']

@@ -42,7 +42,7 @@ const hund = (uid: string, w: Record<string, unknown> = {}) => ({
 
 const buchung = (uid: string, w: Record<string, unknown> = {}) => ({
   kundeId: "k1", kundeName: "Meier Anna", hunde: [{ id: "h1", name: "Rex" }], zimmerId: "zimmer-1", von: "2026-10-20", bis: "2026-10-23",
-  status: "Bestätigt", leistungen: ["Abholung"], preis: 165, bemerkung: "", bezahlt: false, zahlungsart: "", betrag: 0, bezahltAm: "",
+  status: "Bestätigt", leistungen: ["Fahrdienst Hinweg"], preis: 165, bemerkung: "", bezahlt: false, zahlungsart: "", betrag: 0, bezahltAm: "",
   erstellt: "2026-10-18T10:00:00", person: uid, uid, ...w,
 });
 
@@ -91,7 +91,7 @@ describe("Buchungen", () => {
     await assertFails(setDoc(doc(als("morena"), "pension_buchungen/b2"), buchung("morena")));
   });
 
-  it("Abreise vor Ankunft und unbekannte Status werden abgelehnt", async () => {
+  it("Abholung vor Ankunft und unbekannte Status werden abgelehnt", async () => {
     await assertFails(setDoc(doc(als("sina"), "pension_buchungen/b1"), buchung("sina", { bis: "2026-10-19" })));
     await assertFails(setDoc(doc(als("sina"), "pension_buchungen/b1"), buchung("sina", { status: "Vielleicht" })));
     await assertFails(setDoc(doc(als("sina"), "pension_buchungen/b1"), buchung("sina", { hunde: [] })));

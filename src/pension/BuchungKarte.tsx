@@ -10,7 +10,7 @@ import { darf, STUFE } from "../lib/rollen";
 import { speichern } from "../ui";
 import { usePension } from "./daten";
 
-export const statusFarbe: Record<string, string> = { Anfrage: "warn", "Bestätigt": "acc", Eingecheckt: "good", Abgereist: "", Storniert: "bad" };
+export const statusFarbe: Record<string, string> = { Anfrage: "warn", "Bestätigt": "acc", Eingecheckt: "good", Abgeholt: "", Storniert: "bad" };
 
 function Auschecken({ b, zeigen, fertig }: { b: Buchung; zeigen: (t: string) => void; fertig: () => void }) {
   const ich = useIch();
@@ -21,10 +21,10 @@ function Auschecken({ b, zeigen, fertig }: { b: Buchung; zeigen: (t: string) => 
     e.preventDefault();
     const tag = heute();
     const rechnung = art === "Rechnung";
-    // Früher abgereist: das Zimmer ist ab heute wieder frei.
+    // Früher abgeholt: das Zimmer ist ab heute wieder frei.
     const bis = tag < b.bis && tag >= b.von ? tag : b.bis;
     const ok = await speichern(zeigen, () => updateDoc(doc(db, "pension_buchungen", b.id), {
-      status: "Abgereist", bis, betrag: zahl(betrag), zahlungsart: art, bezahlt: !rechnung, bezahltAm: rechnung ? "" : tag, geaendertVon: ich.uid,
+      status: "Abgeholt", bis, betrag: zahl(betrag), zahlungsart: art, bezahlt: !rechnung, bezahltAm: rechnung ? "" : tag, geaendertVon: ich.uid,
     }), rechnung ? "Ausgecheckt, Rechnung offen" : "Ausgecheckt und bezahlt");
     if (ok) fertig();
   }
@@ -46,7 +46,7 @@ export function BuchungKarte({ b, zeigen }: { b: Buchung; zeigen: (t: string) =>
   const bearbeiten = darf(ich.rollen, "pension", STUFE.bearbeiten);
   const zimmer = d.zimmer.find((z) => z.id === b.zimmerId);
   const kunde = d.kunden.find((k) => k.id === b.kundeId);
-  const warnungen = b.status === "Abgereist" || b.status === "Storniert" ? [] : b.hunde.flatMap((x) => {
+  const warnungen = b.status === "Abgeholt" || b.status === "Storniert" ? [] : b.hunde.flatMap((x) => {
     const h = d.hunde.find((y) => y.id === x.id);
     return h ? impfWarnungen(h, b.bis, heute()) : [];
   });
@@ -54,7 +54,7 @@ export function BuchungKarte({ b, zeigen }: { b: Buchung; zeigen: (t: string) =>
     speichern(zeigen, () => updateDoc(doc(db, "pension_buchungen", b.id), { status: neu, geaendertVon: ich.uid }), ok);
 
   return (
-    <article className={`item${b.status === "Storniert" || b.status === "Abgereist" ? " done" : ""}`}>
+    <article className={`item${b.status === "Storniert" || b.status === "Abgeholt" ? " done" : ""}`}>
       <div className="item-row">
         <strong>{b.hunde.map((h) => h.name).join(", ")}</strong>
         <span className={`pill ${statusFarbe[b.status]}`}>{b.status}</span>
@@ -70,7 +70,7 @@ export function BuchungKarte({ b, zeigen }: { b: Buchung; zeigen: (t: string) =>
       {b.leistungen.length > 0 && <div className="meta">{b.leistungen.map((l) => <span key={l} className="pill">{l}</span>)}</div>}
       {b.bemerkung && <p>{b.bemerkung}</p>}
       {warnungen.map((w) => <p key={w} className="notice">{w}</p>)}
-      {b.status === "Abgereist" && b.zahlungsart && (
+      {b.status === "Abgeholt" && b.zahlungsart && (
         <div className="meta">
           <span>CHF {chf(b.betrag)} · {b.zahlungsart}</span>
           {b.bezahlt ? <span className="pill good">Bezahlt {datum(b.bezahltAm)}</span> : <span className="pill warn">Rechnung offen</span>}
@@ -85,7 +85,7 @@ export function BuchungKarte({ b, zeigen }: { b: Buchung; zeigen: (t: string) =>
             <button type="button" className="btn small" onClick={() => status("Eingecheckt", "Eingecheckt")}>Einchecken</button>
           )}
           {b.status === "Eingecheckt" && <button type="button" className="btn small" onClick={() => setCheckout(true)}>Auschecken</button>}
-          {b.status === "Abgereist" && !b.bezahlt && b.zahlungsart === "Rechnung" && (
+          {b.status === "Abgeholt" && !b.bezahlt && b.zahlungsart === "Rechnung" && (
             <button type="button" className="btn ghost small" onClick={() => speichern(zeigen, () => updateDoc(doc(db, "pension_buchungen", b.id), { bezahlt: true, bezahltAm: heute(), geaendertVon: ich.uid }), "Als bezahlt markiert")}>
               Rechnung bezahlt
             </button>

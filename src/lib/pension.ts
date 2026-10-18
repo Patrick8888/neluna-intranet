@@ -40,10 +40,10 @@ export type Hund = {
   uid?: string;
 };
 
-export const BUCHUNG_STATUS = ["Anfrage", "Bestätigt", "Eingecheckt", "Abgereist", "Storniert"] as const;
+export const BUCHUNG_STATUS = ["Anfrage", "Bestätigt", "Eingecheckt", "Abgeholt", "Storniert"] as const;
 export type BuchungStatus = (typeof BUCHUNG_STATUS)[number];
 
-export const LEISTUNGEN = ["Abholung", "Rückbringung", "Baden", "Medikamente geben", "Eigenes Futter"];
+export const LEISTUNGEN = ["Fahrdienst Hinweg", "Fahrdienst Rückweg", "Baden", "Medikamente geben", "Eigenes Futter"];
 export const ZAHLUNGSARTEN = ["Bar", "Karte", "TWINT", "Rechnung"] as const;
 export type Zahlungsart = (typeof ZAHLUNGSARTEN)[number];
 export const GESCHLECHTER = ["Rüde", "Hündin"];
@@ -85,12 +85,12 @@ export function zimmerListe(gespeichert: Zimmer[]): Zimmer[] {
   return [...alle.values()].sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true }));
 }
 
-/** Erster und letzter belegter Tag. Am Abreisetag ist das Zimmer wieder frei; Tagesgäste belegen einen Tag. */
+/** Erster und letzter belegter Tag. Am Abholtag ist das Zimmer wieder frei; Tagesgäste belegen einen Tag. */
 export function belegteTage(b: { von: string; bis: string }): [string, string] {
   return [b.von, b.bis > b.von ? plusTage(b.bis, -1) : b.von];
 }
 
-/** Ist der Hund an diesem Tag in der Pension (inkl. An- und Abreisetag)? */
+/** Ist der Hund an diesem Tag in der Pension (inkl. Ankunfts- und Abholtag)? */
 export const istDa = (b: Buchung, tag: string) => b.von <= tag && tag <= b.bis && b.status !== "Storniert" && b.status !== "Anfrage";
 
 const zaehlt = (b: Buchung) => b.status !== "Storniert";
@@ -102,8 +102,8 @@ export function belegungPruefen(
   d: { buchungen: Buchung[]; zimmer: Zimmer[]; hunde: Hund[] },
   neu: Anfrage,
 ): string | null {
-  if (!neu.von || !neu.bis) return "Bitte Ankunft und Abreise angeben.";
-  if (neu.bis < neu.von) return "Die Abreise liegt vor der Ankunft.";
+  if (!neu.von || !neu.bis) return "Bitte Ankunft und Abholung angeben.";
+  if (neu.bis < neu.von) return "Die Abholung liegt vor der Ankunft.";
   if (!neu.hundIds.length) return "Bitte mindestens einen Hund wählen.";
   const zimmer = d.zimmer.find((z) => z.id === neu.zimmerId);
   if (!zimmer || !zimmer.aktiv) return "Dieses Zimmer ist nicht verfügbar.";
