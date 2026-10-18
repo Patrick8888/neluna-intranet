@@ -44,7 +44,7 @@ export function Login() {
       <main>
         <div style={{ textAlign: "center" }}>
           <div className="eyebrow">Hundepension · Pfötli Shop</div>
-          <h1>Intranet</h1>
+          <h1>Pfötli Buch</h1>
         </div>
         <form onSubmit={anmelden} className="panel">
           {fehler && <p className="notice bad" role="alert">{fehler}</p>}
@@ -63,7 +63,7 @@ export function Login() {
           </div>
         </form>
         <p className="hint" style={{ textAlign: "center" }}>
-          Erster Start? <Link to="/einrichtung">Intranet einrichten</Link>
+          Erster Start? <Link to="/einrichtung">Pfötli Buch einrichten</Link>
         </p>
       </main>
     </div>

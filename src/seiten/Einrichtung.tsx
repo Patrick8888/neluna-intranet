@@ -53,7 +53,7 @@ export function Einrichtung() {
       if (code === "permission-denied") {
         if (neuesKonto && auth.currentUser) await deleteUser(auth.currentUser).catch(() => {});
         await auth.signOut();
-        setFehler("Das Intranet ist bereits eingerichtet. Bitte beim Admin einen Zugang anfragen.");
+        setFehler("Das Pfötli Buch ist bereits eingerichtet. Bitte beim Admin einen Zugang anfragen.");
       } else {
         setFehler(meldung(err));
       }
@@ -67,10 +67,10 @@ export function Einrichtung() {
       <main>
         <div style={{ textAlign: "center" }}>
           <div className="eyebrow">Erster Start</div>
-          <h1>Intranet einrichten</h1>
+          <h1>Pfötli Buch einrichten</h1>
         </div>
         <form onSubmit={einrichten} className="panel">
-          <p className="hint">Nur beim allerersten Mal: Wer das Intranet einrichtet, wird Admin und legt danach das Team an.</p>
+          <p className="hint">Nur beim allerersten Mal: Wer das Pfötli Buch einrichtet, wird Admin und legt danach das Team an.</p>
           {fehler && <p className="notice bad" role="alert">{fehler}</p>}
           <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" /></label>
           <label>E-Mail<input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" /></label>

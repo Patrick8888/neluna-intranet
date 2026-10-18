@@ -1,7 +1,7 @@
 {
-  "name": "NeLuna Intranet",
-  "short_name": "NeLuna",
-  "description": "Intranet für die NeLuna Hundepension und den Pfötli Shop",
+  "name": "NeLuna's Pfötli Buch",
+  "short_name": "Pfötli Buch",
+  "description": "Intranet für die NeLuna Hundepension Willisdorf und den Pfötli Shop",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050505",

@@ -1,6 +1,6 @@
-# NeLuna Intranet
+# NeLuna's Pfötli Buch
 
-Intranet für die Hundepension NeLuna und NeLuna's Pfötli Shop (Stein am Rhein): Login, Rollen, Benutzerverwaltung, später Ladenbuch, Belegungsplan, Fahrdienst, Kalender und Chat.
+Das Intranet für die Hundepension NeLuna (Willisdorf) und NeLuna's Pfötli Shop (Stein am Rhein): Login, Rollen, Benutzerverwaltung, später Ladenbuch, Belegungsplan, Fahrdienst, Kalender und Chat.
 
 Web-App (React, Vite) auf Firebase: Authentication, Firestore (Zürich) und Hosting. Konzept: [docs/KONZEPT.md](docs/KONZEPT.md). Einrichtung des Firebase-Projekts und der Domain: [docs/EINRICHTUNG.md](docs/EINRICHTUNG.md).
 

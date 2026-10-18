@@ -44,7 +44,7 @@ export function KeinZugang() {
         <section className="panel">
           <h1>Kein Zugang</h1>
           <p className="muted" style={{ margin: 0 }}>
-            Für dieses Konto ist kein aktiver Zugang zum Intranet eingerichtet. Bitte bei Patrick Schaub melden.
+            Für dieses Konto ist kein aktiver Zugang zum Pfötli Buch eingerichtet. Bitte bei Patrick Schaub melden.
           </p>
           <div className="actions"><button className="btn ghost" onClick={() => signOut(auth)}>Abmelden</button></div>
         </section>
