@@ -1,5 +1,5 @@
 // Fachlogik von Fahrdienst und Fahrzeugen. Unabhängig von Firebase, damit sie testbar bleibt.
-import { plusTage } from "./format";
+import { datum, plusTage } from "./format";
 import type { Buchung, Kunde } from "./pension";
 
 export const FAHRT_STATUS = ["Geplant", "Unterwegs", "Erledigt", "Abgesagt"] as const;
@@ -32,12 +32,12 @@ export type Fahrt = {
 
 export type Fahrzeug = { id: string; name: string; kennzeichen: string; kmStand: number; aktiv: boolean; notiz: string };
 
-export const TERMIN_ARTEN = ["Reifenwechsel", "Service", "MFK", "Versicherung", "Vignette", "Reparatur", "Reinigung Hundeboxen", "Anderes"] as const;
+export const TERMIN_ARTEN = ["Reifenwechsel", "Service", "MFK", "Versicherung", "Vignette", "Reparatur", "Reinigung Hundeboxen", "Problem", "Anderes"] as const;
 export type TerminArt = (typeof TERMIN_ARTEN)[number];
 
 /** Vorschlag, wann ein Termin wiederkommt (Monate); im Formular änderbar. */
 export const STANDARD_WIEDERHOLUNG: Record<TerminArt, number> = {
-  Reifenwechsel: 6, Service: 12, MFK: 0, Versicherung: 12, Vignette: 12, Reparatur: 0, "Reinigung Hundeboxen": 1, Anderes: 0,
+  Reifenwechsel: 6, Service: 12, MFK: 0, Versicherung: 12, Vignette: 12, Reparatur: 0, "Reinigung Hundeboxen": 1, Problem: 0, Anderes: 0,
 };
 
 export type FahrzeugTermin = {
@@ -100,9 +100,10 @@ export function fahrtenAusBuchungen(buchungen: Buchung[], fahrten: Fahrt[], kund
   return { fehlend, abweichend };
 }
 
-/** Garagentermin, der das Fahrzeug an diesem Tag blockiert. */
+/** Garagentermin, der das Fahrzeug an diesem Tag blockiert; ein gemeldetes Problem «nicht fahrbereit» blockiert, bis es erledigt ist. */
 export function fahrzeugBlockiert(termine: FahrzeugTermin[], fahrzeugId: string, tag: string): FahrzeugTermin | undefined {
-  return termine.find((t) => t.fahrzeugId === fahrzeugId && t.blockiert && t.datum === tag);
+  return termine.find((t) => t.fahrzeugId === fahrzeugId && t.blockiert
+    && (t.datum === tag || (t.art === "Problem" && !t.erledigt && t.datum <= tag)));
 }
 
 /** Prüft eine Fahrt; gibt eine verständliche Meldung zurück oder null. */
@@ -113,6 +114,7 @@ export function fahrtPruefen(f: Pick<Fahrt, "datum" | "fahrzeugId" | "adresse" |
   const fz = fahrzeuge.find((x) => x.id === f.fahrzeugId);
   if (!fz || !fz.aktiv) return "Dieses Fahrzeug ist nicht in Betrieb.";
   const t = fahrzeugBlockiert(termine, f.fahrzeugId, f.datum);
+  if (t?.art === "Problem") return `${fz.name} ist nicht fahrbereit (${t.notiz || "Problem gemeldet"}).`;
   if (t) return `${fz.name} ist an diesem Tag in der Garage (${t.art}${t.garage ? `, ${t.garage}` : ""}).`;
   return null;
 }
@@ -155,12 +157,14 @@ export function faelligeTermine(termine: FahrzeugTermin[], fahrzeuge: Fahrzeug[]
     if (fz && !fz.aktiv) continue;
     const km = fz?.kmStand ?? 0;
     const perKm = t.faelligKm > 0 && km >= t.faelligKm - 1000;
-    const perDatum = !!t.datum && t.datum <= grenze && !(t.faelligKm > 0 && !t.wiederholungMonate);
+    // Gemeldete Probleme bleiben in der Liste, bis sie erledigt sind.
+    const problem = t.art === "Problem";
+    const perDatum = problem || (!!t.datum && t.datum <= grenze && !(t.faelligKm > 0 && !t.wiederholungMonate));
     if (!perKm && !perDatum) continue;
-    const ueberfaellig = (perDatum && t.datum < heute) || (perKm && km >= t.faelligKm);
+    const ueberfaellig = problem || (perDatum && t.datum < heute) || (perKm && km >= t.faelligKm);
     liste.push({
       termin: t, fahrzeug: fz, ueberfaellig,
-      grund: perKm && (!perDatum || km >= t.faelligKm) ? `fällig bei ${t.faelligKm.toLocaleString("de-CH")} km (jetzt ${km.toLocaleString("de-CH")} km)` : "",
+      grund: problem ? `${t.notiz || "Problem gemeldet"} (seit ${datum(t.datum)}${t.blockiert ? ", nicht fahrbereit" : ""})` : perKm && (!perDatum || km >= t.faelligKm) ? `fällig bei ${t.faelligKm.toLocaleString("de-CH")} km (jetzt ${km.toLocaleString("de-CH")} km)` : "",
     });
   }
   return liste.sort((a, b) => Number(b.ueberfaellig) - Number(a.ueberfaellig) || a.termin.datum.localeCompare(b.termin.datum));

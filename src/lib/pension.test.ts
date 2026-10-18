@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  abrechnungTage, auslastung, klasseAusGewicht,
   aufgabenFuer, bargeldSumme, belegteTage, belegungPruefen, impfWarnungen, istDa, kassenVorschlag, naechte, zimmerListe,
   STANDARD_ZIMMER, type Buchung, type Hund,
 } from "./pension";
@@ -18,8 +19,9 @@ const zimmer = zimmerListe([{ id: "zimmer-2", name: "Zimmer 2", maxHunde: 2, akt
 const hunde = [hund("rex"), hund("bello"), hund("luna"), hund("wild", { vertraeglich: false })];
 
 describe("Zimmer", () => {
-  it("ergänzt die sechs Standardzimmer mit gespeicherten Einstellungen", () => {
-    expect(zimmer).toHaveLength(6);
+  it("ergänzt die Standardzimmer mit gespeicherten Einstellungen", () => {
+    expect(zimmer).toHaveLength(10);
+    expect(zimmer.map((z) => z.name).slice(5, 8)).toEqual(["Zimmer 6", "Hundezimmer Hunde Mitarbeiter", "Zimmer Erika"]);
     expect(zimmer[1]).toMatchObject({ id: "zimmer-2", maxHunde: 2 });
     expect(zimmer[0].maxHunde).toBe(STANDARD_ZIMMER[0].maxHunde);
   });
@@ -110,5 +112,43 @@ describe("Kasse Pension", () => {
   it("zählt Noten und Münzen", () => {
     expect(bargeldSumme({ "100": 2, "20": "3", "0.5": 1, "0.05": 3 })).toBe(260.65);
     expect(bargeldSumme({ "10": -2, "5": "abc" })).toBe(0);
+  });
+});
+
+describe("Gewichtsklassen", () => {
+  const z = zimmerListe([{ id: "zimmer-4", name: "Zimmer 4", maxHunde: 3, plaetze: { klein: 3, mittel: 2, gross: 1 }, aktiv: true, notiz: "" }]);
+  const h = [hund("mini", { gewichtsklasse: "klein" }), hund("mini2", { gewichtsklasse: "klein" }), hund("mittel", { gewichtsklasse: "mittel" }), hund("riese", { gewichtsklasse: "gross" })];
+
+  it("ordnet das Gewicht einer Klasse zu", () => {
+    expect([klasseAusGewicht("12"), klasseAusGewicht("25"), klasseAusGewicht("45"), klasseAusGewicht("45,5"), klasseAusGewicht("")]).toEqual(["klein", "mittel", "mittel", "gross", ""]);
+  });
+
+  it("ein grosser Hund füllt das Zimmer, kleine teilen es", () => {
+    const zi = z.find((x) => x.id === "zimmer-4")!;
+    expect(auslastung(zi, ["klein", "klein", "klein"])).toBeCloseTo(1);
+    const d = { buchungen: [buchung("a", { zimmerId: "zimmer-4", hunde: [{ id: "riese", name: "riese" }] })], zimmer: z, hunde: h };
+    expect(belegungPruefen(d, { zimmerId: "zimmer-4", von: "2026-10-21", bis: "2026-10-22", hundIds: ["mini"] })).toMatch(/zu wenig Platz für diese Grösse/);
+    const d2 = { buchungen: [buchung("a", { zimmerId: "zimmer-4", hunde: [{ id: "mini", name: "mini" }] })], zimmer: z, hunde: h };
+    expect(belegungPruefen(d2, { zimmerId: "zimmer-4", von: "2026-10-21", bis: "2026-10-22", hundIds: ["mini2", "mittel"] })).toMatch(/zu wenig Platz/);
+    expect(belegungPruefen(d2, { zimmerId: "zimmer-4", von: "2026-10-21", bis: "2026-10-22", hundIds: ["mittel"] })).toBeNull();
+  });
+
+  it("eine Klasse mit 0 Plätzen passt nicht ins Zimmer", () => {
+    const z0 = zimmerListe([{ id: "zimmer-5", name: "Zimmer 5", maxHunde: 2, plaetze: { klein: 2, mittel: 1, gross: 0 }, aktiv: true, notiz: "" }]);
+    expect(belegungPruefen({ buchungen: [], zimmer: z0, hunde: h }, { zimmerId: "zimmer-5", von: "2026-10-21", bis: "2026-10-22", hundIds: ["riese"] })).toMatch(/«riese» \(ab 45 kg\) passt nicht/);
+  });
+});
+
+describe("Abrechnung", () => {
+  it("zählt Nächte, Tage und Tagesbetreuung pro Hund im Monat", () => {
+    const b = [
+      buchung("a", { von: "2026-10-30", bis: "2026-11-02" }),
+      buchung("b", { von: "2026-10-05", bis: "2026-10-05" }),
+      buchung("c", { von: "2026-10-10", bis: "2026-10-12", status: "Storniert" }),
+      buchung("t", { kundeId: "team", von: "2026-10-01", bis: "2026-10-31" }),
+    ];
+    const kunden = [{ id: "team", name: "Team", telefon: "", email: "", adresse: "", notfallkontakt: "", tierarzt: "", notiz: "", team: true }];
+    expect(abrechnungTage(b, kunden, "2026-10")).toEqual([{ kunde: "Meier", hund: "rex", naechte: 2, tage: 2, tagesbetreuung: 1, aufenthalte: 2 }]);
+    expect(abrechnungTage(b, kunden, "2026-11")).toEqual([{ kunde: "Meier", hund: "rex", naechte: 1, tage: 2, tagesbetreuung: 0, aufenthalte: 1 }]);
   });
 });

@@ -59,6 +59,13 @@ describe("Zimmer", () => {
     await assertFails(setDoc(doc(als("cristina"), "pension_zimmer/zimmer-2"), { ...z, maxHunde: 0 }));
     await assertSucceeds(getDoc(doc(als("rahel"), "pension_zimmer/zimmer-2")));
   });
+
+  it("Plätze je Gewichtsklasse und zusätzliche Zimmer", async () => {
+    const z = { name: "Zimmer Escobar", maxHunde: 3, plaetze: { klein: 3, mittel: 2, gross: 1 }, aktiv: true, notiz: "" };
+    await assertSucceeds(setDoc(doc(als("cristina"), "pension_zimmer/zimmer-9"), z));
+    await assertFails(setDoc(doc(als("cristina"), "pension_zimmer/zimmer-9"), { ...z, plaetze: { klein: 3, mittel: 2 } }));
+    await assertFails(setDoc(doc(als("cristina"), "pension_zimmer/zimmer-9"), { ...z, plaetze: { klein: 3, mittel: 2, gross: 11 } }));
+  });
 });
 
 describe("Kartei", () => {
@@ -68,6 +75,13 @@ describe("Kartei", () => {
     await assertSucceeds(getDoc(doc(als("rahel"), "pension_hunde/h1")));
     await assertFails(setDoc(doc(als("rahel"), "pension_kunden/k2"), kunde("rahel")));
     await assertFails(setDoc(doc(als("laura"), "pension_hunde/h2"), hund("laura")));
+  });
+
+  it("Stammblatt: Gewichtsklasse, Chip und Teamhunde", async () => {
+    await assertSucceeds(setDoc(doc(als("sina"), "pension_kunden/k1"), { ...kunde("sina"), telefon2: "078 000 00 00", versicherung: "AXA Haftpflicht", team: true }));
+    await assertSucceeds(setDoc(doc(als("sina"), "pension_hunde/h1"), hund("sina", { gewicht: "32", gewichtsklasse: "mittel", chipnummer: "756098100123456", kommandos: "Sitz, Platz" })));
+    await assertFails(setDoc(doc(als("sina"), "pension_hunde/h2"), hund("sina", { gewichtsklasse: "riesig" })));
+    await assertSucceeds(updateDoc(doc(als("sina"), "pension_kunden/k1"), { versicherung: "Mobiliar" }));
   });
 
   it("Änderungen behalten, wer den Eintrag erfasst hat", async () => {

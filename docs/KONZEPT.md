@@ -58,7 +58,10 @@ Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pensio
 
 ### 3.3 Hundepension (Standort Willisdorf)
 - **Kunden- und Hundekartei:** Halter/in (Kontakt, Notfallkontakt, Tierarzt), Hund (Rasse, Alter, Geschlecht, kastriert, Foto), Impfungen mit Ablaufdatum und Warnung, Futter und Futtermenge, Medikamente, Allergien, Verträglichkeit mit anderen Hunden, Verhalten, Besonderheiten.
-- **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgeholt). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Freie Zimmer für einen Zeitraum suchen.
+- **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgeholt). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Pro Zimmer lässt sich zusätzlich festlegen, wie viele Hunde je Gewichtsklasse Platz haben (bis 25 kg, 25–45 kg, ab 45 kg); gemischt wird anteilig gerechnet. Freie Zimmer für einen Zeitraum suchen.
+- **Stammblatt:** alle Angaben zu Halter/in und Hund auf einer druckbaren Seite (Kontakt, Telefon 2, Versicherung, Chip, Gewicht, Fütterung, Kommandos, Ängste, Freilauf, Schlafplatz, Spielverhalten, Läufigkeit), mit Unterschriftszeile.
+- **Abrechnung:** Tage pro Hund und Monat (Ferienbetreuung: Nächte und Tage; Tagesbetreuung), als Tabelle und CSV für die Rechnungen. Teamhunde zählen nicht.
+- **Teamhunde:** die Hunde von Cristina (Buffy, Yasha, Lou) sowie Patrick und Nalan (Escobar, Benji, Peppy, Mäxi, Lina) sind als Team-Einträge in der Kartei (Entscheid 18.10.2026).
 - **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Fahrdienst Hin- und Rückweg, Baden), Preis, Bemerkungen.
 - **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends, Medikamente, Spaziergang, Auffälligkeiten). Wer hat es wann erledigt.
 - **Tagesbericht / Übergabe Pension:** wie beim Laden, Pendenzen für die nächste Schicht.
@@ -67,7 +70,7 @@ Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pensio
 ### 3.4 Fahrdienstplan
 Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Fahrdienst Hinweg/Rückweg» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in. Wer für eine Fahrt eingeteilt ist, setzt deren Status selbst (auch als Aushilfe aus dem Verkauf). Ändert sich die Buchung (Datum, Storno), zeigt der Plan die betroffene Fahrt zum Prüfen an.
 
-**Fahrzeuge und Unterhalt:** Pro Fahrzeug Kennzeichen, Kilometerstand und eine Liste von Garagen- und Unterhaltsterminen: Reifenwechsel (Winter-/Sommerreifen, Einlagerung bei der Garage), Service, MFK, Versicherung und Vignette, Reparaturen, Reinigung/Desinfektion der Hundeboxen. Jeder Termin mit Datum, Garage, Kosten, Beleg (Foto) und Notiz. Die Beleg-Fotos kommen mit der Datei-Ablage in Phase 4 (gleich wie Fotos im Chat). Wiederkehrende Termine erzeugen den nächsten automatisch (z. B. Reifenwechsel jeden Oktober und April, Service nach Kilometern oder Datum). Fällige Termine erscheinen auf der Startseite und im Kalender; ein Garagentermin blockiert das Fahrzeug im Fahrdienstplan.
+**Fahrzeuge und Unterhalt:** Pro Fahrzeug Kennzeichen, Kilometerstand und eine Liste von Garagen- und Unterhaltsterminen: Reifenwechsel (Winter-/Sommerreifen, Einlagerung bei der Garage), Service, MFK, Versicherung und Vignette, Reparaturen, Reinigung/Desinfektion der Hundeboxen. Jeder Termin mit Datum, Garage, Kosten, Beleg (Foto) und Notiz. Die Beleg-Fotos kommen mit der Datei-Ablage in Phase 4 (gleich wie Fotos im Chat). Wiederkehrende Termine erzeugen den nächsten automatisch (z. B. Reifenwechsel jeden Oktober und April, Service nach Kilometern oder Datum). Fällige Termine erscheinen auf der Startseite und im Kalender; ein Garagentermin blockiert das Fahrzeug im Fahrdienstplan. Probleme (z. B. Bremsen, Kontrolllampe, Schaden) meldet das Team direkt beim Fahrzeug; ist es nicht fahrbereit, bleibt es für den Fahrdienst gesperrt, bis das Problem erledigt ist.
 
 ### 3.5 Chat
 Gruppenkanäle (Alle, Pension, Laden, Geschäftsführung) und Direktnachrichten. Fotos anhängen (z. B. Foto vom Hund für die Halter-Info oder Lieferschaden). Ungelesen-Anzeige; Push-Benachrichtigung auf dem Handy in einer späteren Phase.
@@ -171,7 +174,7 @@ Jede Phase wird in einem eigenen Thread mit Claude Code umgesetzt, als Pull Requ
 
 Geklärt (17.10.2026):
 - **Domain:** neluna.ch ist vorhanden, das Intranet läuft unter `intranet.neluna.ch`.
-- **Zimmer:** 6 Zimmer, benannt «Zimmer 1» bis «Zimmer 6».
+- **Zimmer:** «Zimmer 1» bis «Zimmer 6», dazu «Hundezimmer Hunde Mitarbeiter», «Zimmer Erika», «Zimmer Escobar» und «Hinter Schiebetüre» (Entscheid 18.10.2026).
 - **Hosting:** ~~eigener Server-PC~~ ersetzt am 18.10.2026 durch **Firebase** (siehe Abschnitt 5), wie das Salonbuch.
 - **Domain-Anbieter:** neluna.ch wird bei Hostfactory verwaltet und bleibt dort. Für `intranet.neluna.ch` werden nur die DNS-Einträge eingetragen, die Firebase Hosting anzeigt.
 - **Repository:** neues privates Repository `neluna-intranet`.

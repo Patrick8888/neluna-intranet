@@ -18,6 +18,21 @@ export function useToast() {
   return { zeigen, element };
 }
 
+/**
+ * Ist die Komponente noch angezeigt? Speichern kann bei schlechtem Netz dauern; wer inzwischen
+ * woanders hin getippt hat, soll danach nicht zurück aufs Formular springen.
+ */
+export function useAngezeigt() {
+  const ref = useRef(true);
+  useEffect(() => {
+    ref.current = true;
+    return () => {
+      ref.current = false;
+    };
+  }, []);
+  return ref;
+}
+
 /** Speichern mit Rückmeldung; Fehler werden verständlich angezeigt. */
 export async function speichern(zeigen: (t: string) => void, aktion: () => Promise<unknown>, ok: string): Promise<boolean> {
   try {

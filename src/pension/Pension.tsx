@@ -25,6 +25,7 @@ function Unternavigation({ team, tagesplan, kasse }: { team: boolean; tagesplan:
     { pfad: "tagesplan", titel: "Tagesplan", zeigen: tagesplan },
     { pfad: "uebergabe", titel: "Übergabe", zeigen: team },
     { pfad: "kasse", titel: "Kasse", zeigen: kasse },
+    { pfad: "abrechnung", titel: "Abrechnung", zeigen: team },
   ];
   return (
     <>
