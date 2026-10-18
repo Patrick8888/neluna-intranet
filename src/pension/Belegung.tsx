@@ -148,7 +148,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
         )}
         {!kunden.length && <p className="hint wide">Noch keine Kundschaft erfasst. <Link to="/pension/kartei">Zuerst in der Kartei anlegen</Link></p>}
         <label>Ankunft<input type="date" value={w.von} onChange={(e) => set({ von: e.target.value, bis: w.bis < e.target.value ? e.target.value : w.bis })} required /></label>
-        <label>Abreise<input type="date" value={w.bis} min={w.von} onChange={(e) => set({ bis: e.target.value })} required /></label>
+        <label>Abholung<input type="date" value={w.bis} min={w.von} onChange={(e) => set({ bis: e.target.value })} required /></label>
         <label>
           Zimmer
           <select value={w.zimmerId} onChange={(e) => set({ zimmerId: e.target.value })} required>
@@ -172,7 +172,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
         </fieldset>
         <label>Preis CHF<input className="num" inputMode="decimal" value={w.preis} onChange={(e) => set({ preis: e.target.value })} placeholder="0.00" /></label>
         <label className="wide">Bemerkung<textarea value={w.bemerkung} onChange={(e) => set({ bemerkung: e.target.value })} placeholder="z. B. bringt eigenes Körbchen mit, Abholung 9 Uhr" /></label>
-        <p className="hint wide">{naechte(w) ? `${naechte(w)} Nächte` : "Tagesgast (gleicher Tag)"} · Am Abreisetag ist das Zimmer wieder frei.</p>
+        <p className="hint wide">{naechte(w) ? `${naechte(w)} Nächte` : "Tagesgast (gleicher Tag)"} · Am Abholtag ist das Zimmer wieder frei.</p>
         {fehler && <p className="notice bad wide" role="alert">{fehler}</p>}
         {warnungen.map((x) => <p key={x} className="notice wide">{x}</p>)}
         <div className="wide actions">
@@ -244,7 +244,7 @@ export function Belegung() {
         </div>
         <Plan start={start} oeffnen={oeffnen} />
         <div className="meta">
-          <span className="pill warn">Anfrage</span><span className="pill acc">Bestätigt</span><span className="pill good">Eingecheckt</span><span className="pill">Abgereist</span>
+          <span className="pill warn">Anfrage</span><span className="pill acc">Bestätigt</span><span className="pill good">Eingecheckt</span><span className="pill">Abgeholt</span>
           <span>Tippe auf einen Balken, um die Buchung zu öffnen.</span>
         </div>
       </section>

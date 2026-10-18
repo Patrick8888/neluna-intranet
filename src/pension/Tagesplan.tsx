@@ -89,7 +89,7 @@ export function Tagesplan() {
               <div className="meta">
                 <span className="pill acc">{zimmer?.name}</span>
                 {b.von === tag && <span className="pill good">Ankunft</span>}
-                {b.bis === tag && <span className="pill warn">Abreise</span>}
+                {b.bis === tag && <span className="pill warn">Abholung</span>}
               </div>
             </div>
             <div className="meta">

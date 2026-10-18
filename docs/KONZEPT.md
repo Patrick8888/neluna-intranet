@@ -51,21 +51,21 @@ Bestehende Regeln aus dem Organisationshandbuch werden im System abgebildet, z. 
 ## 3. Module
 
 ### 3.1 Startseite («Heute»)
-Persönliche Übersicht: heutige Ankünfte und Abreisen in der Pension, heutige Fahrten, offene Übergabe-Pendenzen, eigene Aufgaben, Termine, neue Mitteilungen, ungelesene Chats. Für die Geschäftsführung zusätzlich Kennzahlen (Belegung, Umsatz Laden der Woche, Kassendifferenzen).
+Persönliche Übersicht: heutige Ankünfte und Abholungen in der Pension, heutige Fahrten, offene Übergabe-Pendenzen, eigene Aufgaben, Termine, neue Mitteilungen, ungelesene Chats. Für die Geschäftsführung zusätzlich Kennzahlen (Belegung, Umsatz Laden der Woche, Kassendifferenzen).
 
 ### 3.2 Kalender
-Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pension (Ankünfte/Abreisen), Fahrdienst, Laden (Lieferungen, Loomis, Aktionen), Personal (Ferien, Abwesenheiten), Sitzungen, Firmentermine. Tages-, Wochen- und Monatsansicht. Optional später: Abo-Link für Handy-Kalender (iCal).
+Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pension (Ankünfte/Abholungen), Fahrdienst, Laden (Lieferungen, Loomis, Aktionen), Personal (Ferien, Abwesenheiten), Sitzungen, Firmentermine. Tages-, Wochen- und Monatsansicht. Optional später: Abo-Link für Handy-Kalender (iCal).
 
 ### 3.3 Hundepension (Standort Willisdorf)
 - **Kunden- und Hundekartei:** Halter/in (Kontakt, Notfallkontakt, Tierarzt), Hund (Rasse, Alter, Geschlecht, kastriert, Foto), Impfungen mit Ablaufdatum und Warnung, Futter und Futtermenge, Medikamente, Allergien, Verträglichkeit mit anderen Hunden, Verhalten, Besonderheiten.
-- **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgereist). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Freie Zimmer für einen Zeitraum suchen.
-- **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Abholung, Baden), Preis, Bemerkungen.
+- **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgeholt). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Freie Zimmer für einen Zeitraum suchen.
+- **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Fahrdienst Hin- und Rückweg, Baden), Preis, Bemerkungen.
 - **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends, Medikamente, Spaziergang, Auffälligkeiten). Wer hat es wann erledigt.
 - **Tagesbericht / Übergabe Pension:** wie beim Laden, Pendenzen für die nächste Schicht.
 - **Kassenbuch Pension:** eigenes Kassenbuch für die Pension in Willisdorf, getrennt vom Laden, aber gleich aufgebaut wie das Ladenbuch: Tagesabschluss mit Bar, Karte und TWINT, Bar-Ausgaben, gezähltes Bargeld, Differenz, Wechselgeld, Safebag/Einzahlung und CSV-Export. Zahlungen beim Check-out können direkt aus der Buchung übernommen werden (Hund, Halter/in, Betrag, Zahlungsart); bezahlte Rechnungen (Überweisung) werden separat erfasst und laufen nicht durch die Kasse. Auswertungen für die Geschäftsführung zeigen Laden und Pension getrennt und zusammen. Der tägliche Kassenabschluss wird in der Pension neu eingeführt (Entscheid 18.10.2026); das Intranet führt deshalb Schritt für Schritt durch den Abschluss und erinnert am Abend, wenn er fehlt.
 
 ### 3.4 Fahrdienstplan
-Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Abholung/Rückbringung» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in.
+Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Fahrdienst Hinweg/Rückweg» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in.
 
 **Fahrzeuge und Unterhalt:** Pro Fahrzeug Kennzeichen, Kilometerstand und eine Liste von Garagen- und Unterhaltsterminen: Reifenwechsel (Winter-/Sommerreifen, Einlagerung bei der Garage), Service, MFK, Versicherung und Vignette, Reparaturen, Reinigung/Desinfektion der Hundeboxen. Jeder Termin mit Datum, Garage, Kosten, Beleg (Foto) und Notiz. Wiederkehrende Termine erzeugen den nächsten automatisch (z. B. Reifenwechsel jeden Oktober und April, Service nach Kilometern oder Datum). Fällige Termine erscheinen auf der Startseite und im Kalender; ein Garagentermin blockiert das Fahrzeug im Fahrdienstplan.
 

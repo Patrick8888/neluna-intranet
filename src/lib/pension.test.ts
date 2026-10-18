@@ -26,7 +26,7 @@ describe("Zimmer", () => {
 });
 
 describe("Belegung", () => {
-  it("der Abreisetag ist wieder frei", () => {
+  it("der Abholtag ist wieder frei", () => {
     expect(belegteTage({ von: "2026-10-20", bis: "2026-10-23" })).toEqual(["2026-10-20", "2026-10-22"]);
     expect(belegteTage({ von: "2026-10-20", bis: "2026-10-20" })).toEqual(["2026-10-20", "2026-10-20"]);
     expect(naechte({ von: "2026-10-20", bis: "2026-10-23" })).toBe(3);
@@ -42,7 +42,7 @@ describe("Belegung", () => {
     expect(belegungPruefen(d, { zimmerId: "zimmer-1", von: "2026-10-22", bis: "2026-10-25", hundIds: ["bello"] })).toMatch(/Zimmer 1 ist am 22\.10\.2026 voll/);
   });
 
-  it("Anreise am Abreisetag des Vorgängers ist erlaubt", () => {
+  it("Ankunft am Abholtag des Vorgängers ist erlaubt", () => {
     const d = { buchungen: [buchung("a")], zimmer, hunde };
     expect(belegungPruefen(d, { zimmerId: "zimmer-1", von: "2026-10-23", bis: "2026-10-25", hundIds: ["bello"] })).toBeNull();
   });
