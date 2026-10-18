@@ -18,7 +18,9 @@ Das bestehende **Ladenbuch** (Kassenbuch, Übergabe, Bestellungen, Reklamationen
 | Morena Riccardi | Leitung Verkaufsladen (Filialleiterin) | Leitung Laden |
 | Rahel Winet | Verkäuferin 100 % | Verkauf |
 | Claudia Binder | Verkäuferin 60 % (ab Jan. 2027 80 %) | Verkauf |
-| (später) | Betreuung Pension, Fahrer/in, Aushilfe | Mitarbeit Pension / Fahrdienst |
+| Laura Essinger | Fahrerin | Fahrdienst |
+| Nic Richter | Fahrer | Fahrdienst |
+| (später) | Betreuung Pension, Aushilfe | Mitarbeit Pension |
 
 Eine Person kann mehrere Rollen haben (z. B. Verkäuferin, die auch Fahrdienst macht). Rollen und Rechte verwaltet der Admin selbst im Intranet.
 
@@ -168,8 +170,10 @@ Geklärt (17.10.2026):
 - **Repository:** neues privates Repository `neluna-intranet`.
 - **Reihenfolge:** egal, daher Laden zuerst (Ladenbuch ist bereits im Einsatz), danach Pension.
 
+Geklärt (18.10.2026):
+- **Firebase-Projekt:** Patrick legt ein neues Google-Konto für NeLuna an und darin das Projekt `neluna-intranet`.
+- **Hunde pro Zimmer:** entscheidet das Team selbst. Im Intranet ist die Anzahl pro Zimmer einstellbar (Standard 1, Hunde derselben Familie dürfen zusammen).
+- **Fahrdienst:** Laura Essinger und Nic Richter fahren, Patrick Schaub ist Backup.
+
 Noch offen:
-1. **Firebase-Projekt:** Patrick legt das Projekt `neluna-intranet` an (mit demselben Google-Konto wie das Salonbuch oder einem eigenen NeLuna-Konto).
-2. **Hunde pro Zimmer:** Wie viele Hunde passen jeweils in ein Zimmer? (Annahme bis zur Antwort: in der Einstellung pro Zimmer frei wählbar, Standard 1, Hunde derselben Familie dürfen zusammen.)
-3. **Fahrdienst:** Wer fährt und mit wie vielen Fahrzeugen? (Wird im Intranet selbst erfasst, blockiert den Start nicht.)
-4. **Bestehende Werkzeuge der Pension:** Gibt es Buchungsdaten (Software, Excel), die übernommen werden sollen?
+1. **Bestehende Daten der Pension:** Buchungsdaten (Software, Excel) liefert Patrick nach; blockiert den Start nicht.
