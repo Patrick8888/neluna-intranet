@@ -126,6 +126,16 @@ service cloud.firestore {
     function pensionBearbeiten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'mitarbeit_pension']); }
     function pensionVerwalten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension']); }
 
+    // Fahrdienst: alle sehen den Plan; Pensionsteam und Fahrdienst bearbeiten, die Leitung Pension verwaltet.
+    // Wer als Fahrer/in eingeteilt ist, setzt bei der eigenen Fahrt den Status, auch ohne Bearbeitungsrecht.
+    function fahrdienstLesen() { return teamLesen(); }
+    function fahrdienstBearbeiten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'mitarbeit_pension', 'fahrdienst']); }
+    function fahrdienstVerwalten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension']); }
+
+    // Kalender: alle tragen ein; fremde Termine ändern nur Geschäftsführung und Leitungen.
+    function kalenderBearbeiten() { return teamLesen(); }
+    function kalenderVerwalten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'leitung_laden']); }
+
     // Kassenbuch je Standort.
     function kasseBearbeiten(standort) {
       return (standort == 'laden' && ladenBearbeiten()) || (standort == 'pension' && pensionBearbeiten());
@@ -350,6 +360,89 @@ service cloud.firestore {
       allow update: if pensionBearbeiten() && nurFelder(['erledigt', 'erledigtVon', 'erledigtAm'])
         && request.resource.data.erledigt is bool && text(request.resource.data, 'erledigtVon', 100);
       allow delete: if pensionVerwalten() || (pensionBearbeiten() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---------- Fahrdienst und Fahrzeuge ----------
+
+    function unveraendert(felder) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(felder);
+    }
+
+    match /fahrten/{id} {
+      function gueltigeFahrt(d) {
+        return d.keys().hasOnly(['datum', 'zeit', 'richtung', 'buchungId', 'kundeName', 'telefon', 'adresse', 'hunde', 'fahrerUid', 'fahrerName',
+            'fahrzeugId', 'fahrzeugName', 'status', 'notiz', 'erstellt', 'person', 'uid', 'geaendertVon'])
+          && datumOk(d, 'datum')
+          && d.richtung in ['Hinweg', 'Rückweg']
+          && d.status in ['Geplant', 'Unterwegs', 'Erledigt', 'Abgesagt']
+          && d.adresse is string && d.adresse.size() > 0 && d.adresse.size() <= 300
+          && d.hunde is list && d.hunde.size() <= 10
+          && text(d, 'zeit', 5) && text(d, 'buchungId', 60) && text(d, 'kundeName', 120) && text(d, 'telefon', 40)
+          && text(d, 'fahrerUid', 128) && text(d, 'fahrerName', 100) && text(d, 'fahrzeugId', 60) && text(d, 'fahrzeugName', 100)
+          && text(d, 'notiz', 2000);
+      }
+      allow read: if fahrdienstLesen();
+      allow create: if fahrdienstBearbeiten() && vonMir() && gueltigeFahrt(request.resource.data);
+      allow update: if gueltigeFahrt(request.resource.data)
+        && unveraendert(['erstellt', 'person', 'uid'])
+        && request.resource.data.geaendertVon == request.auth.uid
+        && (fahrdienstBearbeiten()
+            || (fahrdienstLesen() && resource.data.fahrerUid == request.auth.uid && nurFelder(['status', 'notiz', 'geaendertVon'])));
+      allow delete: if fahrdienstVerwalten() || (fahrdienstBearbeiten() && resource.data.uid == request.auth.uid);
+    }
+
+    match /fahrzeuge/{id} {
+      function gueltigesFahrzeug(d) {
+        return d.keys().hasOnly(['name', 'kennzeichen', 'kmStand', 'aktiv', 'notiz'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 60
+          && d.kmStand is int && d.kmStand >= 0 && d.kmStand <= 2000000
+          && d.aktiv is bool && text(d, 'kennzeichen', 20) && text(d, 'notiz', 1000);
+      }
+      allow read: if fahrdienstBearbeiten();
+      allow create: if fahrdienstVerwalten() && gueltigesFahrzeug(request.resource.data);
+      allow delete: if fahrdienstVerwalten();
+      // Wer fährt, trägt den Kilometerstand nach; er kann nur steigen.
+      allow update: if gueltigesFahrzeug(request.resource.data) && (
+        fahrdienstVerwalten()
+        || (fahrdienstBearbeiten() && nurFelder(['kmStand']) && request.resource.data.kmStand >= resource.data.kmStand)
+      );
+    }
+
+    match /fahrzeug_termine/{id} {
+      function gueltigerTermin(d) {
+        return d.keys().hasOnly(['fahrzeugId', 'art', 'datum', 'zeit', 'garage', 'kosten', 'kmStand', 'faelligKm', 'blockiert',
+            'wiederholungMonate', 'wiederholungKm', 'notiz', 'erledigt', 'erledigtAm', 'erstellt', 'person', 'uid'])
+          && d.fahrzeugId is string && d.fahrzeugId.size() > 0
+          && d.art in ['Reifenwechsel', 'Service', 'MFK', 'Versicherung', 'Vignette', 'Reparatur', 'Reinigung Hundeboxen', 'Anderes']
+          && datumOk(d, 'datum')
+          && betrag(d, 'kosten')
+          && d.kmStand is int && d.kmStand >= 0 && d.faelligKm is int && d.faelligKm >= 0
+          && d.wiederholungMonate is int && d.wiederholungMonate >= 0 && d.wiederholungMonate <= 60
+          && d.wiederholungKm is int && d.wiederholungKm >= 0
+          && d.blockiert is bool && d.erledigt is bool
+          && text(d, 'zeit', 5) && text(d, 'garage', 120) && text(d, 'notiz', 2000) && text(d, 'erledigtAm', 10);
+      }
+      allow read: if fahrdienstBearbeiten();
+      allow create: if fahrdienstBearbeiten() && vonMir() && gueltigerTermin(request.resource.data);
+      allow update: if fahrdienstBearbeiten() && gueltigerTermin(request.resource.data) && unveraendert(['erstellt', 'person', 'uid']);
+      allow delete: if fahrdienstVerwalten() || (fahrdienstBearbeiten() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---------- Kalender ----------
+
+    match /termine/{id} {
+      function gueltigerKalenderTermin(d) {
+        return d.keys().hasOnly(['titel', 'datum', 'bis', 'zeit', 'zeitBis', 'ebene', 'ort', 'beschreibung', 'erstellt', 'person', 'uid'])
+          && d.titel is string && d.titel.size() > 0 && d.titel.size() <= 200
+          && datumOk(d, 'datum') && datumOk(d, 'bis') && d.datum <= d.bis
+          && d.ebene in ['Laden', 'Pension', 'Personal', 'Sitzungen', 'Firma']
+          && text(d, 'zeit', 5) && text(d, 'zeitBis', 5) && text(d, 'ort', 200) && text(d, 'beschreibung', 2000);
+      }
+      allow read: if teamLesen();
+      allow create: if kalenderBearbeiten() && vonMir() && gueltigerKalenderTermin(request.resource.data);
+      allow update: if gueltigerKalenderTermin(request.resource.data) && unveraendert(['erstellt', 'person', 'uid'])
+        && (kalenderVerwalten() || (kalenderBearbeiten() && resource.data.uid == request.auth.uid));
+      allow delete: if kalenderVerwalten() || (kalenderBearbeiten() && resource.data.uid == request.auth.uid);
     }
 
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.

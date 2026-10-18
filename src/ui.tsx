@@ -62,3 +62,22 @@ export function useTeamNamen(): string[] {
   );
   return namen;
 }
+
+export type TeamPerson = { uid: string; name: string; rollen: string[] };
+
+/** Alle aktiven Personen mit Rollen, alphabetisch (z. B. für die Auswahl der Fahrer/innen). */
+export function useTeam(): TeamPerson[] {
+  const [team, setTeam] = useState<TeamPerson[]>([]);
+  useEffect(
+    () =>
+      onSnapshot(query(collection(db, "benutzer"), where("aktiv", "==", true)), (snap) =>
+        setTeam(
+          snap.docs
+            .map((d) => ({ uid: d.id, name: String(d.data().name), rollen: (d.data().rollen as string[]) ?? [] }))
+            .sort((a, b) => a.name.localeCompare(b.name, "de")),
+        ),
+      ),
+    [],
+  );
+  return team;
+}
