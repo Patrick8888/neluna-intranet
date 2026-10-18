@@ -121,6 +121,19 @@ service cloud.firestore {
     function sitzungSchreiben() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'leitung_laden']); }
     function sitzungLoeschen() { return eineVon(['geschaeftsfuehrung']); }
 
+    // Pension: alle sehen Belegung und Kartei; Leitung Pension und Mitarbeit Pension bearbeiten, die Leitung verwaltet.
+    function pensionLesen() { return teamLesen(); }
+    function pensionBearbeiten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'mitarbeit_pension']); }
+    function pensionVerwalten() { return eineVon(['geschaeftsfuehrung', 'leitung_pension']); }
+
+    // Kassenbuch je Standort.
+    function kasseBearbeiten(standort) {
+      return (standort == 'laden' && ladenBearbeiten()) || (standort == 'pension' && pensionBearbeiten());
+    }
+    function kasseVerwalten(standort) {
+      return (standort == 'laden' && ladenVerwalten()) || (standort == 'pension' && pensionVerwalten());
+    }
+
     function text(d, feld, max) {
       return !(feld in d) || (d[feld] is string && d[feld].size() <= max);
     }
@@ -150,7 +163,7 @@ service cloud.firestore {
       function gueltigeKasse(d) {
         return d.keys().hasOnly(['standort', 'datum', 'person', 'uid', 'anfang', 'bar', 'karte', 'twint', 'ausgaben', 'gezaehlt',
             'safebagBetrag', 'safebagNr', 'notiz', 'total', 'soll', 'differenz', 'wechselgeldNeu', 'abgeholt', 'abgeholtAm', 'geaendertAm'])
-          && d.standort == 'laden'
+          && d.standort in ['laden', 'pension']
           && id == d.standort + '_' + d.datum
           && d.datum is string && d.datum.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
           && betrag(d, 'anfang') && betrag(d, 'bar') && betrag(d, 'karte') && betrag(d, 'twint') && betrag(d, 'ausgaben')
@@ -158,13 +171,16 @@ service cloud.firestore {
           && betrag(d, 'differenz') && betrag(d, 'wechselgeldNeu')
           && d.abgeholt is bool && text(d, 'abgeholtAm', 10) && text(d, 'safebagNr', 40) && text(d, 'notiz', 2000);
       }
-      allow read: if ladenBearbeiten();
-      allow create: if ladenBearbeiten() && vonMir() && gueltigeKasse(request.resource.data);
+      // Einzelner Abschluss: der Standort steht in der ID (auch wenn es den Abschluss noch nicht gibt).
+      allow get: if (id.matches('laden_.*') && kasseBearbeiten('laden')) || (id.matches('pension_.*') && kasseBearbeiten('pension'));
+      // Listen nur mit Filter auf den eigenen Standort.
+      allow list: if kasseBearbeiten(resource.data.standort);
+      allow create: if kasseBearbeiten(request.resource.data.standort) && vonMir() && gueltigeKasse(request.resource.data);
       // Ganzer Abschluss neu (wer zuletzt speichert, steht drin) oder nur die Loomis-Abholung.
-      allow update: if ladenBearbeiten() && gueltigeKasse(request.resource.data)
-        && ((vonMir() && request.resource.data.standort == resource.data.standort)
-            || nurFelder(['abgeholt', 'abgeholtAm']));
-      allow delete: if ladenVerwalten();
+      allow update: if kasseBearbeiten(resource.data.standort) && gueltigeKasse(request.resource.data)
+        && request.resource.data.standort == resource.data.standort
+        && (vonMir() || nurFelder(['abgeholt', 'abgeholtAm']));
+      allow delete: if kasseVerwalten(resource.data.standort);
     }
 
     match /laden_uebergabe/{id} {
@@ -242,6 +258,98 @@ service cloud.firestore {
       allow read: if sitzungSchreiben();
       allow create, update: if sitzungSchreiben() && gueltigesProtokoll(request.resource.data);
       allow delete: if sitzungLoeschen();
+    }
+
+    // ---------- Pension ----------
+
+    function datumOk(d, feld) {
+      return d[feld] is string && d[feld].matches('[0-9]{4}-[0-9]{2}-[0-9]{2}');
+    }
+
+    match /pension_zimmer/{id} {
+      allow read: if pensionLesen();
+      allow write: if pensionVerwalten()
+        && id.matches('zimmer-[0-9]+')
+        && request.resource.data.keys().hasOnly(['name', 'maxHunde', 'aktiv', 'notiz'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
+        && request.resource.data.maxHunde is int && request.resource.data.maxHunde >= 1 && request.resource.data.maxHunde <= 10
+        && request.resource.data.aktiv is bool && text(request.resource.data, 'notiz', 500);
+    }
+
+    match /pension_kunden/{id} {
+      function gueltigerKunde(d) {
+        return d.keys().hasOnly(['name', 'telefon', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'notiz', 'erstellt', 'person', 'uid'])
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 120
+          && text(d, 'telefon', 40) && text(d, 'email', 200) && text(d, 'adresse', 300)
+          && text(d, 'notfallkontakt', 200) && text(d, 'tierarzt', 200) && text(d, 'notiz', 4000);
+      }
+      allow read: if pensionLesen();
+      allow create: if pensionBearbeiten() && vonMir() && gueltigerKunde(request.resource.data);
+      allow update: if pensionBearbeiten() && gueltigerKunde(request.resource.data)
+        && nurFelder(['name', 'telefon', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'notiz']);
+      allow delete: if pensionVerwalten();
+    }
+
+    match /pension_hunde/{id} {
+      function gueltigerHund(d) {
+        return d.keys().hasOnly(['kundeId', 'name', 'rasse', 'geburtsdatum', 'geschlecht', 'kastriert', 'futter', 'menge', 'medikamente',
+            'allergien', 'verhalten', 'vertraeglich', 'notiz', 'impfungen', 'erstellt', 'person', 'uid'])
+          && d.kundeId is string && d.kundeId.size() > 0
+          && d.name is string && d.name.size() > 0 && d.name.size() <= 80
+          && d.kastriert is bool && d.vertraeglich is bool
+          && d.impfungen is list && d.impfungen.size() <= 20
+          && text(d, 'rasse', 100) && text(d, 'futter', 500) && text(d, 'menge', 200) && text(d, 'medikamente', 1000)
+          && text(d, 'allergien', 500) && text(d, 'verhalten', 2000) && text(d, 'notiz', 4000);
+      }
+      allow read: if pensionLesen();
+      allow create: if pensionBearbeiten() && vonMir() && gueltigerHund(request.resource.data);
+      allow update: if pensionBearbeiten() && gueltigerHund(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['erstellt', 'person', 'uid']);
+      allow delete: if pensionVerwalten();
+    }
+
+    match /pension_buchungen/{id} {
+      function gueltigeBuchung(d) {
+        return d.keys().hasOnly(['kundeId', 'kundeName', 'hunde', 'zimmerId', 'von', 'bis', 'status', 'leistungen', 'preis', 'bemerkung',
+            'bezahlt', 'zahlungsart', 'betrag', 'bezahltAm', 'erstellt', 'person', 'uid', 'geaendertVon'])
+          && d.kundeId is string && d.kundeName is string
+          && d.hunde is list && d.hunde.size() >= 1 && d.hunde.size() <= 10
+          && d.zimmerId is string && d.zimmerId.matches('zimmer-[0-9]+')
+          && datumOk(d, 'von') && datumOk(d, 'bis') && d.von <= d.bis
+          && d.status in ['Anfrage', 'Bestätigt', 'Eingecheckt', 'Abgereist', 'Storniert']
+          && d.leistungen is list && d.leistungen.size() <= 10
+          && betrag(d, 'preis') && betrag(d, 'betrag') && d.bezahlt is bool
+          && d.zahlungsart in ['', 'Bar', 'Karte', 'TWINT', 'Rechnung']
+          && text(d, 'bezahltAm', 10) && text(d, 'bemerkung', 2000);
+      }
+      allow read: if pensionLesen();
+      allow create: if pensionBearbeiten() && vonMir() && gueltigeBuchung(request.resource.data);
+      allow update: if pensionBearbeiten() && gueltigeBuchung(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['erstellt', 'person', 'uid'])
+        && request.resource.data.geaendertVon == request.auth.uid;
+      allow delete: if pensionVerwalten();
+    }
+
+    // Abhakliste pro Tag: ein Dokument je Datum.
+    match /pension_tagesplan/{tag} {
+      allow read: if pensionBearbeiten();
+      allow create, update: if pensionBearbeiten()
+        && tag.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+        && request.resource.data.keys().hasOnly(['erledigt', 'notizen'])
+        && (!('erledigt' in request.resource.data) || request.resource.data.erledigt is map)
+        && (!('notizen' in request.resource.data) || request.resource.data.notizen is map);
+      allow delete: if false;
+    }
+
+    match /pension_uebergabe/{id} {
+      allow read: if pensionBearbeiten();
+      allow create: if pensionBearbeiten() && vonMir()
+        && request.resource.data.keys().hasOnly(['datum', 'erstellt', 'person', 'uid', 'kategorie', 'text', 'pendenz', 'wichtig', 'erledigt', 'erledigtVon', 'erledigtAm'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 4000
+        && request.resource.data.pendenz is bool && request.resource.data.wichtig is bool && request.resource.data.erledigt is bool;
+      allow update: if pensionBearbeiten() && nurFelder(['erledigt', 'erledigtVon', 'erledigtAm'])
+        && request.resource.data.erledigt is bool && text(request.resource.data, 'erledigtVon', 100);
+      allow delete: if pensionVerwalten() || (pensionBearbeiten() && resource.data.uid == request.auth.uid);
     }
 
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.

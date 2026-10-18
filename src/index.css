@@ -152,3 +152,43 @@ tr.click:hover td { background: var(--accent-soft); }
 .prow { display: grid; grid-template-columns: minmax(0, 1fr) 170px 150px auto; gap: 8px; align-items: center; }
 @media (max-width: 640px) { .prow { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; } .prow > input:first-child { grid-column: 1 / -1; } }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--accent); color: var(--accent-ink); padding: 11px 18px; border-radius: 999px; font-weight: 700; font-size: 0.9rem; z-index: 20; }
+
+/* Pension: Belegungsplan */
+.plan { min-width: 760px; display: grid; }
+.plan-zeile { display: grid; grid-template-columns: 96px 1fr; border-bottom: 1px solid var(--line); min-height: 44px; }
+.plan-zeile:last-child { border-bottom: 0; }
+.plan-zeile.kopf { background: var(--sunk); }
+.plan-name { display: grid; align-content: center; gap: 1px; padding: 6px 10px; border-right: 1px solid var(--line); font-size: 0.85rem; }
+.plan-name span { font-size: 0.72rem; color: var(--muted); }
+.plan-spur { display: grid; grid-auto-rows: 30px; gap: 4px 0; padding: 6px 0; align-content: start; }
+.plan-zeile.kopf .plan-spur { padding: 0; }
+.plan-tag { display: grid; justify-items: center; padding: 6px 0; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+.plan-tag b { font-size: 0.9rem; color: var(--ink); letter-spacing: 0; }
+.plan-tag.we { background: var(--bg); }
+.plan-tag.heute { background: var(--accent-soft); }
+.plan-tag.heute b { color: var(--accent); }
+.balken { font: inherit; font-size: 0.78rem; font-weight: 600; text-align: left; border: 1px solid var(--frame); border-radius: 8px; margin: 0 2px; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; cursor: pointer; background: var(--accent-soft); color: var(--accent); min-width: 0; }
+.balken.warn { background: var(--warn-soft); color: var(--warn); border-color: var(--warn); border-style: dashed; }
+.balken.good { background: var(--good-soft); color: var(--good); border-color: var(--good); }
+.balken.aus { background: var(--sunk); color: var(--muted); border-color: var(--line); }
+.zimmer-zeile { display: grid; grid-template-columns: minmax(0, 1fr) 110px minmax(0, 1.4fr) auto auto; gap: 8px; align-items: center; }
+label.inline { display: flex; align-items: center; gap: 8px; }
+label.inline input { width: 70px; }
+.impf-zeile { display: grid; grid-template-columns: minmax(0, 1fr) 170px auto; gap: 8px; align-items: center; }
+.aufgaben { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.aufgabe { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; min-height: 44px; }
+.aufgabe.erledigt { background: var(--good-soft); border-color: var(--good); }
+.aufgabe .hint { margin-left: auto; }
+.schritte { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; counter-reset: s; }
+.schritte li { counter-increment: s; }
+.schritte button { font: inherit; font-size: 0.78rem; font-weight: 600; border: 1px solid var(--line); background: transparent; color: var(--muted); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+.schritte button::before { content: counter(s) ". "; }
+.schritte button:disabled { cursor: default; opacity: 0.6; }
+.schritte .fertig button { color: var(--good); border-color: var(--good); }
+.schritte .jetzt button { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); opacity: 1; }
+.zaehlen { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+details > .grid, details > form { margin-top: 12px; }
+@media (max-width: 640px) {
+  .zimmer-zeile { grid-template-columns: 1fr 1fr; }
+  .impf-zeile { grid-template-columns: 1fr 1fr; }
+}
