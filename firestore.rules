@@ -1,0 +1,106 @@
+rules_version = '2';
+
+// Sicherheitsregeln des NeLuna Intranets. Sie gelten auf dem Server von Firebase:
+// was hier nicht erlaubt ist, kann auch niemand an der App vorbei tun.
+// Rollen: siehe src/lib/rollen.ts (Namen müssen übereinstimmen).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function angemeldet() {
+      return request.auth != null;
+    }
+
+    function ichPfad() {
+      return /databases/$(database)/documents/benutzer/$(request.auth.uid);
+    }
+
+    function aktiv() {
+      return angemeldet() && exists(ichPfad()) && get(ichPfad()).data.aktiv == true;
+    }
+
+    function hatRolle(rolle) {
+      return aktiv() && get(ichPfad()).data.rollen.hasAny([rolle]);
+    }
+
+    function istAdmin() {
+      return hatRolle('admin');
+    }
+
+    function einrichtungPfad() {
+      return /databases/$(database)/documents/system/einrichtung;
+    }
+
+    function gueltigeRollen(r) {
+      return r is list && r.size() <= 7 && r.hasOnly([
+        'admin', 'geschaeftsfuehrung', 'leitung_pension', 'leitung_laden',
+        'verkauf', 'mitarbeit_pension', 'fahrdienst'
+      ]);
+    }
+
+    function gueltigerBenutzer(d) {
+      return d.keys().hasOnly(['name', 'email', 'funktion', 'pensum', 'telefon', 'rollen', 'aktiv', 'erstelltAm', 'geaendertAm'])
+        && d.keys().hasAll(['name', 'email', 'rollen', 'aktiv'])
+        && d.name is string && d.name.size() > 0 && d.name.size() <= 100
+        && d.email is string && d.email.size() <= 200
+        && d.aktiv is bool
+        && gueltigeRollen(d.rollen)
+        && (!('pensum' in d) || d.pensum == null || (d.pensum is int && d.pensum >= 0 && d.pensum <= 100))
+        && (!('funktion' in d) || d.funktion == null || (d.funktion is string && d.funktion.size() <= 100))
+        && (!('telefon' in d) || d.telefon == null || (d.telefon is string && d.telefon.size() <= 40));
+    }
+
+    match /benutzer/{uid} {
+      // Alle aktiven Personen sehen das Team; das eigene Profil sieht man immer.
+      allow read: if aktiv() || (angemeldet() && request.auth.uid == uid);
+
+      // Admin legt Personen an. Ausnahme: allererste Einrichtung, dann wird man selbst Admin.
+      allow create: if gueltigerBenutzer(request.resource.data) && (
+        istAdmin()
+        || (angemeldet()
+            && request.auth.uid == uid
+            && !exists(einrichtungPfad())
+            && existsAfter(einrichtungPfad())
+            && request.resource.data.email == request.auth.token.email
+            && request.resource.data.aktiv == true
+            && request.resource.data.rollen.hasAll(['admin', 'geschaeftsfuehrung']))
+      );
+
+      // Admin ändert alles, kann sich aber nicht selbst aussperren.
+      // Jede Person ändert bei sich nur Name und Telefon.
+      allow update: if gueltigerBenutzer(request.resource.data) && (
+        (istAdmin()
+          && request.resource.data.email == resource.data.email
+          && (request.auth.uid != uid
+              || (request.resource.data.aktiv == true && request.resource.data.rollen.hasAny(['admin']))))
+        || (aktiv()
+          && request.auth.uid == uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'telefon', 'geaendertAm']))
+      );
+
+      // Niemand wird gelöscht, nur deaktiviert (Nachvollziehbarkeit).
+      allow delete: if false;
+    }
+
+    match /system/einrichtung {
+      allow read: if angemeldet();
+      allow create: if angemeldet()
+        && getAfter(ichPfad()).data.rollen.hasAll(['admin'])
+        && request.resource.data.von == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    match /protokoll/{id} {
+      allow create: if aktiv()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid', 'aktion', 'details', 'zeit'])
+        && request.resource.data.aktion is string;
+      allow read: if istAdmin();
+      allow update, delete: if false;
+    }
+
+    // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.
+    match /{pfad=**} {
+      allow read, write: if false;
+    }
+  }
+}
