@@ -56,9 +56,21 @@ Anschliessend unter **Verwaltung → Benutzer** das Team anlegen. Jede Person be
 4. Nach der Bestätigung (Minuten bis wenige Stunden) stellt Firebase das HTTPS-Zertifikat selbst aus.
 5. Unter **Authentication → Einstellungen → Autorisierte Domains** `intranet.neluna.ch` hinzufügen (macht Firebase meist automatisch).
 
+## 8. Push-Nachrichten (Blaze-Tarif)
+
+Push-Nachrichten aufs Handy (Chat, Mitteilungen, eigene Fahrten) verschickt eine kleine Server-Funktion. Diese gibt es bei Firebase nur im **Blaze-Tarif** (Abrechnung nach Verbrauch; für das Team voraussichtlich gratis, sonst wenige Franken im Monat). Entscheid 18.10.2026: umstellen.
+
+1. **Tarif umstellen:** Firebase-Konsole → unten links **Spark** (oder Zahnrad → **Nutzung und Abrechnung**) → **Tarif ändern** → **Blaze**. Ein Rechnungskonto mit Kreditkarte anlegen.
+2. **Budget-Alarm:** Beim Umstellen fragt Firebase nach einem Budget, sonst in der Google-Cloud-Konsole unter **Abrechnung → Budgets und Benachrichtigungen → Budget erstellen**: Betrag **CHF 5**, Benachrichtigungen bei 50 %, 90 % und 100 % an die NeLuna-Adresse. Der Alarm schickt eine E-Mail, er stoppt nichts.
+3. **Schlüssel für Web-Push:** Projekteinstellungen (Zahnrad) → **Cloud Messaging** → **Web-Konfiguration** → **Web-Push-Zertifikate** → **Schlüsselpaar generieren**. Den angezeigten Schlüssel in `.env` bei `VITE_FIREBASE_VAPID_KEY=` eintragen.
+4. **Deploy** wie immer mit `npm run deploy`. Beim ersten Mal schaltet die Firebase-CLI die nötigen Google-Dienste ein (Cloud Functions, Cloud Build, Artifact Registry, Eventarc); das dauert einige Minuten. Fragt sie nach einer **Bereinigungsrichtlinie für Container-Images** (cleanup policy), mit **Ja** und 1 Tag antworten, damit keine alten Versionen Speicherkosten verursachen. Meldet der allererste Deploy einen Fehler zu Eventarc-Berechtigungen, ein paar Minuten warten und nochmals `npm run deploy`.
+5. **Auf jedem Handy einschalten:** im Pfötli Buch **Profil → Push-Nachrichten auf diesem Gerät einschalten** und die Frage des Browsers mit «Erlauben» beantworten. Auf dem **iPhone** zuerst in Safari **Teilen → Zum Home-Bildschirm** und das Pfötli Buch von dort öffnen (iOS 16.4 oder neuer), sonst bietet Apple keine Push-Nachrichten an.
+
+Im Profil wählt jede Person, wofür sie Push-Nachrichten will (Gruppen-Chats, Direktnachrichten, Mitteilungen, eigene Fahrten). Beim Abmelden bekommt das Gerät keine mehr.
+
 ## Kosten
 
-Der kostenlose **Spark-Tarif** reicht. Ein Wechsel auf Blaze ist erst für Fotos/Dokumente (Cloud Storage) nötig; dann empfiehlt sich ein Budget-Alarm in der Google-Cloud-Konsole.
+Bis auf die Push-Nachrichten reicht der kostenlose **Spark-Tarif**. Mit Blaze bleiben die Gratis-Kontingente bestehen; bezahlt wird nur, was darüber hinausgeht. Fotos im Chat liegen verkleinert in der Datenbank, Cloud Storage wird nicht gebraucht.
 
 ## Datenschutz
 

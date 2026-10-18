@@ -1,0 +1,20 @@
+{
+  "name": "neluna-functions",
+  "private": true,
+  "description": "Server-Funktionen des Pfötli Buchs: Push-Nachrichten für Chat, Mitteilungen und Fahrten.",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc -p . && esbuild src/index.ts --bundle --platform=node --target=node22 --format=cjs --outfile=lib/index.js --external:firebase-admin --external:firebase-functions"
+  },
+  "dependencies": {
+    "firebase-admin": "^14.5.0",
+    "firebase-functions": "^7.4.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.12",
+    "typescript": "~6.0.2"
+  }
+}

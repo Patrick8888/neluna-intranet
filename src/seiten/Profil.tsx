@@ -6,6 +6,7 @@ import { useIch } from "../auth";
 import { meldung } from "../lib/fehler";
 import { passwortFehler } from "../lib/passwort";
 import { ROLLEN } from "../lib/rollen";
+import { PushEinstellungenPanel } from "../chat/Push";
 
 type Zustand = { fehler?: string; ok?: string };
 
@@ -105,6 +106,7 @@ export function Profil() {
         </div>
       </section>
       <ProfilFormular />
+      <PushEinstellungenPanel />
       <PasswortFormular />
     </>
   );

@@ -476,6 +476,99 @@ service cloud.firestore {
       allow delete: if kalenderVerwalten() || (kalenderBearbeiten() && resource.data.uid == request.auth.uid);
     }
 
+    // ---------- Chat und Mitteilungen ----------
+
+    // Gruppen nach Rolle (spiegelt GRUPPEN in src/lib/chat.ts); Direktnachrichten «dm_<uid>_<uid>» nur für die beiden.
+    function kanalZugriff(k) {
+      return (k == 'alle' && teamLesen())
+        || (k == 'pension' && eineVon(['geschaeftsfuehrung', 'leitung_pension', 'mitarbeit_pension', 'fahrdienst']))
+        || (k == 'laden' && eineVon(['geschaeftsfuehrung', 'leitung_laden', 'verkauf']))
+        || (k == 'leitung' && eineVon(['geschaeftsfuehrung', 'leitung_pension', 'leitung_laden']))
+        || (k.matches('dm_[A-Za-z0-9]+_[A-Za-z0-9]+') && teamLesen()
+            && (k.split('_')[1] == request.auth.uid || k.split('_')[2] == request.auth.uid)
+            && k.split('_')[1] < k.split('_')[2]);
+    }
+
+    match /chat/{kanal} {
+      // Stand des Kanals: die letzte Nachricht, für Liste und Ungelesen-Anzeige.
+      allow read: if kanalZugriff(kanal);
+      allow write: if kanalZugriff(kanal)
+        && request.resource.data.keys().hasOnly(['letzte', 'letzterText', 'letztePerson', 'letzteUid'])
+        && request.resource.data.letzte == request.time
+        && request.resource.data.letzteUid == request.auth.uid
+        && request.resource.data.letztePerson is string && request.resource.data.letztePerson.size() <= 100
+        && request.resource.data.letzterText is string && request.resource.data.letzterText.size() <= 200;
+
+      match /nachrichten/{id} {
+        allow read: if kanalZugriff(kanal);
+        allow create: if kanalZugriff(kanal) && vonMir()
+          && request.resource.data.keys().hasOnly(['text', 'uid', 'person', 'zeit', 'bildId'])
+          && request.resource.data.zeit == request.time
+          && request.resource.data.text is string && request.resource.data.text.size() <= 4000
+          && (request.resource.data.text.size() > 0 || 'bildId' in request.resource.data)
+          && (!('bildId' in request.resource.data) || (request.resource.data.bildId == id
+              && existsAfter(/databases/$(database)/documents/chat/$(kanal)/bilder/$(id))));
+        allow update: if false;
+        // Eigene Nachrichten löschen; die Geschäftsführung darf alles löschen.
+        allow delete: if kanalZugriff(kanal) && (resource.data.uid == request.auth.uid || eineVon(['geschaeftsfuehrung']));
+      }
+
+      // Fotos als verkleinertes JPEG (Data-URL), getrennt von den Nachrichten, damit der Verlauf schnell lädt.
+      match /bilder/{id} {
+        allow read: if kanalZugriff(kanal);
+        allow create: if kanalZugriff(kanal)
+          && request.resource.data.keys().hasOnly(['daten', 'uid'])
+          && request.resource.data.uid == request.auth.uid
+          && request.resource.data.daten is string && request.resource.data.daten.size() <= 900000
+          && request.resource.data.daten.matches('data:image/(jpeg|png|webp);base64,.*');
+        allow update: if false;
+        allow delete: if kanalZugriff(kanal) && (resource.data.uid == request.auth.uid || eineVon(['geschaeftsfuehrung']));
+      }
+    }
+
+    // Wann jemand welchen Kanal zuletzt gelesen hat; nur für sich selbst.
+    match /chat_gelesen/{uid} {
+      allow read: if aktiv() && request.auth.uid == uid;
+      allow write: if aktiv() && request.auth.uid == uid && request.resource.data.size() <= 200;
+    }
+
+    // Geräte für Push-Nachrichten (ID = Token). Lesen nur die Server-Funktionen; jede Person meldet nur eigene Geräte an.
+    match /push_geraete/{token} {
+      allow get: if aktiv() && resource.data.uid == request.auth.uid;
+      allow create, update: if aktiv()
+        && request.resource.data.keys().hasOnly(['uid', 'geraet', 'erstellt'])
+        && request.resource.data.uid == request.auth.uid
+        && text(request.resource.data, 'geraet', 60) && text(request.resource.data, 'erstellt', 30);
+      allow delete: if angemeldet() && resource.data.uid == request.auth.uid;
+    }
+
+    // Welche Push-Nachrichten jemand bekommen will; ohne Eintrag alle.
+    match /push_einstellungen/{uid} {
+      allow read: if aktiv() && request.auth.uid == uid;
+      allow write: if aktiv() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['gruppen', 'direkt', 'mitteilungen', 'fahrten'])
+        && request.resource.data.values().hasOnly([true, false]);
+    }
+
+    // Mitteilungen der Geschäftsführung; alle bestätigen mit «Gelesen» (nur den eigenen Eintrag).
+    match /mitteilungen/{id} {
+      function gueltigeMitteilung(d) {
+        return d.keys().hasOnly(['titel', 'text', 'wichtig', 'erstellt', 'person', 'uid', 'gelesen'])
+          && d.titel is string && d.titel.size() > 0 && d.titel.size() <= 120
+          && d.text is string && d.text.size() > 0 && d.text.size() <= 8000
+          && d.wichtig is bool && d.gelesen is map && d.erstellt is string && d.erstellt.size() <= 30;
+      }
+      allow read: if teamLesen();
+      allow create: if eineVon(['geschaeftsfuehrung']) && vonMir() && gueltigeMitteilung(request.resource.data)
+        && request.resource.data.gelesen.size() == 0;
+      allow update: if gueltigeMitteilung(request.resource.data) && (
+        eineVon(['geschaeftsfuehrung'])
+        || (teamLesen() && nurFelder(['gelesen'])
+            && request.resource.data.gelesen.diff(resource.data.gelesen).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.gelesen[request.auth.uid] is string));
+      allow delete: if eineVon(['geschaeftsfuehrung']);
+    }
+
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.
     match /{pfad=**} {
       allow read, write: if false;

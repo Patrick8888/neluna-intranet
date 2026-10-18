@@ -7,6 +7,10 @@ import { datum, heute } from "../lib/format";
 import { faelligeTermine, kartenLink, tagesRoute, type Fahrt, type Fahrzeug, type FahrzeugTermin } from "../lib/fahrdienst";
 import { BEREICHE } from "../lib/navigation";
 import { darf, ROLLEN, STUFE } from "../lib/rollen";
+import { offeneMitteilungen } from "../lib/chat";
+import { MitteilungKarte } from "../chat/Mitteilungen";
+import { useKommunikation } from "../chat/daten";
+import { useToast } from "../ui";
 
 /** Abends erinnern, wenn der Kassenabschluss der Pension fehlt (er ist dort neu). */
 function KassenErinnerung({ stunde }: { stunde: number }) {
@@ -78,6 +82,25 @@ function FaelligeTermine() {
   );
 }
 
+/** Neue Mitteilungen zum Bestätigen und ungelesene Chats. */
+function Neues() {
+  const ich = useIch();
+  const k = useKommunikation();
+  const { zeigen, element } = useToast();
+  const offen = offeneMitteilungen(k.mitteilungen, ich.uid).sort((a, b) => Number(b.wichtig) - Number(a.wichtig));
+  if (!offen.length && !k.ungeleseneChats) return null;
+  return (
+    <section className="panel" aria-labelledby="h-neu">
+      <div className="panel-head">
+        <h2 id="h-neu">Neu für dich</h2>
+        {k.ungeleseneChats > 0 && <Link className="btn ghost small" to="/chat">{k.ungeleseneChats === 1 ? "1 Chat ungelesen" : `${k.ungeleseneChats} Chats ungelesen`}</Link>}
+      </div>
+      {offen.length > 0 && <div className="list">{offen.map((m) => <MitteilungKarte key={m.id} m={m} zeigen={zeigen} />)}</div>}
+      {element}
+    </section>
+  );
+}
+
 function begruessung(stunde: number) {
   if (stunde < 11) return "Guten Morgen";
   if (stunde < 17) return "Guten Tag";
@@ -108,6 +131,7 @@ export function Start() {
         </p>
       </section>
 
+      {darf(ich.rollen, "chat") && <Neues />}
       {darf(ich.rollen, "fahrdienst") && <MeineFahrten />}
       {darf(ich.rollen, "fahrzeuge", STUFE.bearbeiten) && <FaelligeTermine />}
 
