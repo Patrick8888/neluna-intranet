@@ -5,7 +5,7 @@ Diese Schritte sind nur einmal nötig. Danach genügt für jede neue Version `np
 ## 1. Firebase-Projekt anlegen
 
 1. <https://console.firebase.google.com> öffnen (mit dem Google-Konto, das NeLuna gehören soll) und **Projekt hinzufügen**.
-2. Projektname **neluna-intranet**. Google Analytics wird nicht gebraucht.
+2. Projektname **NeLunas-Pfoetli-Buch** (Projekt-ID `nelunas-pfoetli-buch`). Google Analytics wird nicht gebraucht.
 3. Falls Firebase eine andere Projekt-ID vergibt (z. B. `neluna-intranet-1a2b3`), diese in `.firebaserc` eintragen.
 
 ## 2. Login einschalten
@@ -40,11 +40,11 @@ npx firebase login        # einmalig, öffnet den Browser
 npm run deploy            # baut die App, lädt Regeln und App hoch
 ```
 
-Danach läuft das Intranet unter `https://neluna-intranet.web.app`.
+Danach läuft das Intranet unter `https://nelunas-pfoetli-buch.web.app`.
 
 ## 6. Intranet einrichten
 
-`https://neluna-intranet.web.app/einrichtung` öffnen, Name, E-Mail und Passwort eingeben. Wer das als Erstes macht, wird Admin. Danach ist die Seite gesperrt (die Datenbankregeln lassen keine zweite Einrichtung zu).
+`https://nelunas-pfoetli-buch.web.app/einrichtung` öffnen, Name, E-Mail und Passwort eingeben. Wer das als Erstes macht, wird Admin. Danach ist die Seite gesperrt (die Datenbankregeln lassen keine zweite Einrichtung zu).
 
 Anschliessend unter **Verwaltung → Benutzer** das Team anlegen. Jede Person bekommt eine E-Mail, um ihr eigenes Passwort festzulegen.
 

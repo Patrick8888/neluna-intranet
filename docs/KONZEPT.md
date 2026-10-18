@@ -178,7 +178,7 @@ Geklärt (17.10.2026):
 - **Reihenfolge:** egal, daher Laden zuerst (Ladenbuch ist bereits im Einsatz), danach Pension.
 
 Geklärt (18.10.2026):
-- **Firebase-Projekt:** Patrick legt ein neues Google-Konto für NeLuna an und darin das Projekt `neluna-intranet`.
+- **Firebase-Projekt:** Patrick legt ein neues Google-Konto für NeLuna an und darin das Projekt `nelunas-pfoetli-buch`.
 - **Hunde pro Zimmer:** entscheidet das Team selbst. Im Intranet ist die Anzahl pro Zimmer einstellbar (Standard 1, Hunde derselben Familie dürfen zusammen).
 - **Fahrdienst:** Laura Essinger und Nic Richter fahren, Patrick Schaub ist Backup.
 - **Kassenbuch Pension:** wird neu eingeführt, mit täglichem Kassenabschluss wie im Laden.
