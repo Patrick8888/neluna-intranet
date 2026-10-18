@@ -193,6 +193,22 @@ details > .grid, details > form { margin-top: 12px; }
   .impf-zeile { grid-template-columns: 1fr 1fr; }
 }
 
+/* Zimmer-Einstellungen und Stammblatt */
+.zimmer-form { gap: 8px; }
+.sb-raster { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0 18px; }
+.sb-zeile { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); font-size: 0.9rem; }
+.sb-zeile span { color: var(--muted); }
+.sb-zeile b { font-weight: 500; white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.4em; }
+.stammblatt { display: grid; gap: 16px; }
+@media print {
+  :root { --bg: #fff; --surface: #fff; --sunk: #fff; --line: #bbb; --ink: #000; --muted: #444; --accent: #000; }
+  body { background: #fff; color: #000; padding: 0; }
+  .wrap { border: 0; padding: 0; max-width: none; }
+  .kopf, nav.tabs, .unternav, .no-print, .toast { display: none !important; }
+  .panel { border: 0; padding: 0 0 12px; break-inside: avoid; }
+  .sb-block + .sb-block { border-top: 1px solid #bbb; padding-top: 12px; }
+}
+
 /* Fahrdienst */
 .zeit { color: var(--accent); margin-right: 8px; }
 a.adresse { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }

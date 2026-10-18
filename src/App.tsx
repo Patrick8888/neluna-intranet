@@ -17,6 +17,8 @@ import { Sitzungen } from "./sitzungen/Sitzungen";
 import { Belegung } from "./pension/Belegung";
 import { Heute } from "./pension/Heute";
 import { Kartei } from "./pension/Kartei";
+import { Abrechnung } from "./pension/Abrechnung";
+import { Stammblatt } from "./pension/Stammblatt";
 import { PensionKasse } from "./pension/Kasse";
 import { Pension } from "./pension/Pension";
 import { Tagesplan } from "./pension/Tagesplan";
@@ -67,6 +69,8 @@ function Inhalt() {
           <Route path="heute" element={<Heute />} />
           <Route path="belegung" element={<Belegung />} />
           <Route path="kartei" element={<Kartei />} />
+          <Route path="stammblatt/:kundeId" element={<Stammblatt />} />
+          <Route path="abrechnung" element={<Berechtigt modul="pension" mindestens={STUFE.bearbeiten}><Abrechnung /></Berechtigt>} />
           <Route path="tagesplan" element={<Berechtigt modul="tagesplan" mindestens={STUFE.bearbeiten}><Tagesplan /></Berechtigt>} />
           <Route path="uebergabe" element={<Berechtigt modul="pension" mindestens={STUFE.bearbeiten}><PensionUebergabe /></Berechtigt>} />
           <Route path="kasse" element={<Berechtigt modul="pension_kasse" mindestens={STUFE.bearbeiten}><PensionKasse /></Berechtigt>} />

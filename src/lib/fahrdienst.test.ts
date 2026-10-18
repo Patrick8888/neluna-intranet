@@ -83,6 +83,16 @@ describe("Fahrzeuge", () => {
   });
 });
 
+describe("Probleme", () => {
+  it("ein Problem «nicht fahrbereit» blockiert, bis es erledigt ist, und bleibt in der Liste", () => {
+    const p = termin("p", { art: "Problem", datum: "2026-10-10", notiz: "Bremsen quietschen", blockiert: true, wiederholungMonate: 0 });
+    expect(fahrtPruefen({ datum: "2026-10-20", fahrzeugId: "caddy", adresse: "x", status: "Geplant" }, [caddy], [p])).toMatch(/VW Caddy ist nicht fahrbereit \(Bremsen quietschen\)/);
+    expect(fahrtPruefen({ datum: "2026-10-20", fahrzeugId: "caddy", adresse: "x", status: "Geplant" }, [caddy], [{ ...p, erledigt: true }])).toBeNull();
+    const f = faelligeTermine([p], [caddy], "2026-12-01");
+    expect(f[0]).toMatchObject({ ueberfaellig: true, grund: "Bremsen quietschen (seit 10.10.2026, nicht fahrbereit)" });
+  });
+});
+
 describe("Fahreransicht", () => {
   it("eigene Fahrten des Tages, mit Uhrzeit zuerst", () => {
     const f = [fahrt("a", { zeit: "14:00", fahrerUid: "laura" }), fahrt("b", { zeit: "08:30", fahrerUid: "laura" }), fahrt("c", { fahrerUid: "laura" }), fahrt("d", { fahrerUid: "nic" }), fahrt("e", { fahrerUid: "laura", status: "Abgesagt" })];

@@ -9,7 +9,7 @@ import {
   FAHRT_STATUS, fahrtenAusBuchungen, fahrtPruefen, fahrzeugBlockiert, RICHTUNGEN, type Fahrt, type FahrtStatus, type Richtung, type Vorschlag,
 } from "../lib/fahrdienst";
 import { darf, STUFE } from "../lib/rollen";
-import { LoeschKnopf, speichern, useTeam, useToast } from "../ui";
+import { LoeschKnopf, speichern, useAngezeigt, useTeam, useToast } from "../ui";
 import { usePension } from "../pension/daten";
 import { FahrtKarte, fahrtFarbe } from "./FahrtKarte";
 import { useFahrdienst } from "./daten";
@@ -23,6 +23,7 @@ const LEER: Werte = {
 
 function Formular({ vorhanden, vorschlag, fertig, zeigen }: { vorhanden?: Fahrt; vorschlag?: Vorschlag; fertig: () => void; zeigen: (t: string) => void }) {
   const ich = useIch();
+  const angezeigt = useAngezeigt();
   const d = useFahrdienst();
   const p = usePension();
   const team = useTeam();
@@ -66,7 +67,7 @@ function Formular({ vorhanden, vorschlag, fertig, zeigen }: { vorhanden?: Fahrt;
     const ok = vorhanden
       ? await speichern(zeigen, () => updateDoc(doc(db, "fahrten", vorhanden.id), felder), "Fahrt gespeichert")
       : await speichern(zeigen, () => setDoc(doc(db, "fahrten", id), { ...felder, erstellt: zeitstempel(), person: ich.name, uid: ich.uid }), "Fahrt eingeplant");
-    if (ok) fertig();
+    if (ok && angezeigt.current) fertig();
   }
 
   return (
@@ -106,7 +107,7 @@ function Formular({ vorhanden, vorschlag, fertig, zeigen }: { vorhanden?: Fahrt;
           <select value={w.fahrzeugId} onChange={(e) => set({ fahrzeugId: e.target.value })}>
             <option value="">– noch offen –</option>
             {d.fahrzeuge.filter((f) => f.aktiv || f.id === w.fahrzeugId).map((f) => (
-              <option key={f.id} value={f.id}>{f.name}{fahrzeugBlockiert(d.termine, f.id, w.datum) ? " · in der Garage" : ""}</option>
+              <option key={f.id} value={f.id}>{f.name}{fahrzeugBlockiert(d.termine, f.id, w.datum) ? " · nicht verfügbar" : ""}</option>
             ))}
           </select>
         </label>
@@ -118,7 +119,7 @@ function Formular({ vorhanden, vorschlag, fertig, zeigen }: { vorhanden?: Fahrt;
           {vorhanden && (
             <LoeschKnopf
               disabled={!verwalten && vorhanden.uid !== ich.uid}
-              onLoeschen={() => speichern(zeigen, () => deleteDoc(doc(db, "fahrten", vorhanden.id)), "Gelöscht").then((ok) => ok && fertig())}
+              onLoeschen={() => speichern(zeigen, () => deleteDoc(doc(db, "fahrten", vorhanden.id)), "Gelöscht").then((ok) => ok && angezeigt.current && fertig())}
             />
           )}
         </div>
