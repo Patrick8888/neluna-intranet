@@ -1,7 +1,7 @@
 // Einmalige Übernahme der Daten aus dem bisherigen Ladenbuch (JSON-Export).
 // Bereits vorhandene Einträge werden übersprungen; man kann den Import also gefahrlos wiederholen.
 import { useState, type FormEvent } from "react";
-import { collection, doc, getDocs, writeBatch, type DocumentData } from "firebase/firestore";
+import { collection, doc, getDocs, query, where, writeBatch, type DocumentData } from "firebase/firestore";
 import { db } from "../firebase";
 import { useIch } from "../auth";
 import { meldung } from "../lib/fehler";
@@ -118,7 +118,11 @@ export function Import() {
       const { ziele, hinweise } = await umwandeln(daten, ich, passwort);
       const sammlungen = [...new Set(ziele.map((z) => z.sammlung))];
       const vorhanden = new Set<string>();
-      for (const sm of sammlungen) (await getDocs(collection(db, sm))).forEach((d) => vorhanden.add(`${sm}/${d.id}`));
+      for (const sm of sammlungen) {
+        // Das Kassenbuch ist nach Standort getrennt lesbar; übernommen wird nur der Laden.
+        const q = sm === "kasse" ? query(collection(db, sm), where("standort", "==", "laden")) : collection(db, sm);
+        (await getDocs(q)).forEach((d) => vorhanden.add(`${sm}/${d.id}`));
+      }
       const neu = ziele.filter((z) => !vorhanden.has(`${z.sammlung}/${z.id}`));
       for (let i = 0; i < neu.length; i += 400) {
         const batch = writeBatch(db);

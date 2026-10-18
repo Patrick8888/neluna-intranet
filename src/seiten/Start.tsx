@@ -1,7 +1,23 @@
+import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router";
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "../firebase";
 import { useIch } from "../auth";
+import { heute } from "../lib/format";
 import { BEREICHE } from "../lib/navigation";
-import { darf, ROLLEN } from "../lib/rollen";
+import { darf, ROLLEN, STUFE } from "../lib/rollen";
+
+/** Abends erinnern, wenn der Kassenabschluss der Pension fehlt (er ist dort neu). */
+function KassenErinnerung({ stunde }: { stunde: number }) {
+  const [fehlt, setFehlt] = useState(false);
+  useEffect(() => onSnapshot(doc(db, "kasse", `pension_${heute()}`), (snap) => setFehlt(!snap.exists()), () => setFehlt(false)), []);
+  if (!fehlt || stunde < 17) return null;
+  return (
+    <p className="notice">
+      Der Kassenabschluss der Pension fehlt heute noch. <Link to="/pension/kasse">Jetzt Schritt für Schritt abschliessen</Link>
+    </p>
+  );
+}
 
 function begruessung(stunde: number) {
   if (stunde < 11) return "Guten Morgen";
@@ -24,6 +40,7 @@ export function Start() {
   return (
     <>
       {params.has("kein-zugriff") && <p className="notice bad">Für diesen Bereich fehlt dir die Berechtigung.</p>}
+      {darf(ich.rollen, "pension_kasse", STUFE.bearbeiten) && <KassenErinnerung stunde={stunde} />}
       <section className="panel">
         <div className="eyebrow">{datum}</div>
         <h1>{begruessung(stunde)}, {ich.name.split(" ")[0]}</h1>

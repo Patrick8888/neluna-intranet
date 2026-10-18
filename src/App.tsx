@@ -14,6 +14,13 @@ import { Kasse } from "./laden/Kasse";
 import { Laden } from "./laden/Laden";
 import { Wochenbericht } from "./laden/Wochenbericht";
 import { Sitzungen } from "./sitzungen/Sitzungen";
+import { Belegung } from "./pension/Belegung";
+import { Heute } from "./pension/Heute";
+import { Kartei } from "./pension/Kartei";
+import { PensionKasse } from "./pension/Kasse";
+import { Pension } from "./pension/Pension";
+import { Tagesplan } from "./pension/Tagesplan";
+import { PensionUebergabe } from "./pension/Uebergabe";
 
 /** Zeigt die Seite nur mit genügender Berechtigung (die Datenbankregeln prüfen zusätzlich). */
 function Berechtigt({ modul, mindestens = STUFE.lesen, children }: { modul: Modul; mindestens?: Stufe; children: ReactNode }) {
@@ -49,6 +56,15 @@ function Inhalt() {
           <Route path="reklamationen" element={<Reklamationen />} />
           <Route path="loomis" element={<Loomis />} />
           <Route path="wochenbericht" element={<Berechtigt modul="laden_wochenbericht"><Wochenbericht /></Berechtigt>} />
+        </Route>
+        <Route path="pension" element={<Berechtigt modul="pension"><Pension /></Berechtigt>}>
+          <Route index element={<Navigate to="heute" replace />} />
+          <Route path="heute" element={<Heute />} />
+          <Route path="belegung" element={<Belegung />} />
+          <Route path="kartei" element={<Kartei />} />
+          <Route path="tagesplan" element={<Berechtigt modul="tagesplan" mindestens={STUFE.bearbeiten}><Tagesplan /></Berechtigt>} />
+          <Route path="uebergabe" element={<Berechtigt modul="pension" mindestens={STUFE.bearbeiten}><PensionUebergabe /></Berechtigt>} />
+          <Route path="kasse" element={<Berechtigt modul="pension_kasse" mindestens={STUFE.bearbeiten}><PensionKasse /></Berechtigt>} />
         </Route>
         <Route path="sitzungen" element={<Berechtigt modul="sitzungen_team"><Sitzungen /></Berechtigt>} />
         <Route path="admin/benutzer" element={<Berechtigt modul="admin" mindestens={STUFE.verwalten}><BenutzerVerwaltung /></Berechtigt>} />

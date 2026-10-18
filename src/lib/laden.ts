@@ -1,7 +1,7 @@
 // Fachlogik des Ladenbuchs (Kasse, Wochenbericht, CSV). Unabhängig von Firebase, damit sie testbar bleibt.
 import { datum, plusTage, r2, zahl } from "./format";
 
-export type Standort = "laden";
+export type Standort = "laden" | "pension";
 
 export type Kasse = {
   id: string;
