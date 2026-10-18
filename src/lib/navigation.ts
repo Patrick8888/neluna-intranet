@@ -11,7 +11,8 @@ export type Bereich = {
 
 // Reihenfolge = Reihenfolge in der Navigation und auf der Startseite.
 export const BEREICHE: Bereich[] = [
-  { modul: "laden", titel: "Laden", beschreibung: "Kassenbuch, Übergabe, Bestellungen, Reklamationen, Loomis", phase: 1 },
+  { modul: "laden", titel: "Laden", beschreibung: "Kassenbuch, Übergabe, Bestellungen, Reklamationen, Loomis, Wochenbericht", pfad: "/laden" },
+  { modul: "sitzungen_team", titel: "Sitzungen", beschreibung: "Protokolle und Pendenzen der Team- und Kadersitzungen", pfad: "/sitzungen" },
   { modul: "pension", titel: "Hundepension", beschreibung: "Belegungsplan Zimmer 1–6, Hunde- und Kundenkartei", phase: 2 },
   { modul: "tagesplan", titel: "Tagesplan", beschreibung: "Füttern, Medikamente, Spaziergänge abhaken", phase: 2 },
   { modul: "fahrdienst", titel: "Fahrdienst", beschreibung: "Abhol- und Bringfahrten", phase: 3 },
