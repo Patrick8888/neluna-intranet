@@ -35,6 +35,7 @@ L = lesen, B = bearbeiten, V = verwalten/freigeben, – = kein Zugriff
 | Hunde- und Kundenkartei | V | V | L | L | L (nur Betreuungsinfos) |
 | Tagesplan Pension (Füttern, Medikamente, Gassi) | V | V | – | – | B |
 | Fahrdienstplan | V | V | L | L (eigene Fahrten B) | B (eigene Fahrten) |
+| Fahrzeuge und Unterhalt | V | V | – | – | B (Fahrdienst: Termine und km erfassen) |
 | Ladenbuch: Kasse, Übergabe, Bestellungen, Reklamationen, Loomis | V | – | V | B | – |
 | Ladenbuch: Wochenbericht | V | – | B | L | – |
 | Sitzungsprotokolle Team | V | B | B | L | L |
@@ -63,6 +64,8 @@ Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pensio
 
 ### 3.4 Fahrdienstplan
 Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Abholung/Rückbringung» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in.
+
+**Fahrzeuge und Unterhalt:** Pro Fahrzeug Kennzeichen, Kilometerstand und eine Liste von Garagen- und Unterhaltsterminen: Reifenwechsel (Winter-/Sommerreifen, Einlagerung bei der Garage), Service, MFK, Versicherung und Vignette, Reparaturen, Reinigung/Desinfektion der Hundeboxen. Jeder Termin mit Datum, Garage, Kosten, Beleg (Foto) und Notiz. Wiederkehrende Termine erzeugen den nächsten automatisch (z. B. Reifenwechsel jeden Oktober und April, Service nach Kilometern oder Datum). Fällige Termine erscheinen auf der Startseite und im Kalender; ein Garagentermin blockiert das Fahrzeug im Fahrdienstplan.
 
 ### 3.5 Chat
 Gruppenkanäle (Alle, Pension, Laden, Geschäftsführung) und Direktnachrichten. Fotos anhängen (z. B. Foto vom Hund für die Halter-Info oder Lieferschaden). Ungelesen-Anzeige; Push-Benachrichtigung auf dem Handy in einer späteren Phase.
@@ -101,7 +104,9 @@ tagesplan       id, datum, hund_id, art (fuettern/medikament/gassi), erledigt_vo
 
 fahrt           id, datum, zeit_von, zeit_bis, typ (abholen/bringen), buchung_id, adresse,
                 fahrer_id, fahrzeug_id, status, notiz
-fahrzeug        id, name, kennzeichen
+fahrzeug        id, name, kennzeichen, km_stand, aktiv
+fahrzeug_termin id, fahrzeug_id, art (reifen/service/mfk/versicherung/reparatur/reinigung), datum,
+                garage, km_stand, kosten, beleg, notiz, erledigt, wiederholung (monate/km)
 
 termin          id, titel, start, ende, ganztags, ebene, ort, beschreibung, erstellt_von
 kanal           id, name, typ (gruppe/direkt);  kanal_mitglied   kanal_id, benutzer_id, gelesen_bis
@@ -153,7 +158,7 @@ Patrick hat am 18.10.2026 entschieden: Das Intranet wird wie das Salonbuch (haar
 | **0 – Grundgerüst** | Repository, Projekt aufsetzen, Login, Benutzer und Rollen, Profile, Startseite, Layout im NeLuna-Look (Schwarz/Gold wie Ladenbuch) | Alle können sich anmelden |
 | **1 – Laden** | Ladenbuch nachbauen, Daten übernehmen, Ladenbuch-Artefakt danach nur noch lesend | Kassenbuch im Intranet, Laden arbeitet nur noch dort |
 | **2 – Pension** | Kunden- und Hundekartei, Zimmer, Buchungen, Belegungsplan, Tagesplan | Cristina plant die Pension im Intranet |
-| **3 – Fahrdienst und Kalender** | Fahrten aus Buchungen, Fahreransicht, gemeinsamer Kalender | Ein Kalender für alles |
+| **3 – Fahrdienst und Kalender** | Fahrten aus Buchungen, Fahreransicht, Fahrzeuge mit Garagen- und Unterhaltsterminen, gemeinsamer Kalender | Ein Kalender für alles |
 | **4 – Kommunikation** | Chat, Mitteilungen, Push-Benachrichtigungen | WhatsApp-Gruppen werden überflüssig |
 | **5 – Personal und Organisation** | Dienstplan, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
 | **später (Ideen)** | Online-Buchungsanfrage für Kundschaft, Rechnungen Pension, Impf-Erinnerungen per E-Mail, Auswertungen | – |
