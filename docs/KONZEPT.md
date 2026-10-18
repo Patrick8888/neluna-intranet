@@ -37,6 +37,7 @@ L = lesen, B = bearbeiten, V = verwalten/freigeben, – = kein Zugriff
 | Fahrdienstplan | V | V | L | L (eigene Fahrten B) | B (eigene Fahrten) |
 | Fahrzeuge und Unterhalt | V | V | – | – | B (Fahrdienst: Termine und km erfassen) |
 | Ladenbuch: Kasse, Übergabe, Bestellungen, Reklamationen, Loomis | V | – | V | B | – |
+| Kassenbuch Pension | V | V | – | – | B (Mitarbeit Pension: Tagesabschluss erfassen) |
 | Ladenbuch: Wochenbericht | V | – | B | L | – |
 | Sitzungsprotokolle Team | V | B | B | L | L |
 | Sitzungsprotokolle Kader | V | B | B | – | – |
@@ -55,12 +56,13 @@ Persönliche Übersicht: heutige Ankünfte und Abreisen in der Pension, heutige 
 ### 3.2 Kalender
 Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pension (Ankünfte/Abreisen), Fahrdienst, Laden (Lieferungen, Loomis, Aktionen), Personal (Ferien, Abwesenheiten), Sitzungen, Firmentermine. Tages-, Wochen- und Monatsansicht. Optional später: Abo-Link für Handy-Kalender (iCal).
 
-### 3.3 Hundepension
+### 3.3 Hundepension (Standort Willisdorf)
 - **Kunden- und Hundekartei:** Halter/in (Kontakt, Notfallkontakt, Tierarzt), Hund (Rasse, Alter, Geschlecht, kastriert, Foto), Impfungen mit Ablaufdatum und Warnung, Futter und Futtermenge, Medikamente, Allergien, Verträglichkeit mit anderen Hunden, Verhalten, Besonderheiten.
 - **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgereist). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Freie Zimmer für einen Zeitraum suchen.
 - **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Abholung, Baden), Preis, Bemerkungen.
 - **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends, Medikamente, Spaziergang, Auffälligkeiten). Wer hat es wann erledigt.
 - **Tagesbericht / Übergabe Pension:** wie beim Laden, Pendenzen für die nächste Schicht.
+- **Kassenbuch Pension:** eigenes Kassenbuch für die Pension in Willisdorf, getrennt vom Laden, aber gleich aufgebaut wie das Ladenbuch: Tagesabschluss mit Bar, Karte und TWINT, Bar-Ausgaben, gezähltes Bargeld, Differenz, Wechselgeld, Safebag/Einzahlung und CSV-Export. Zahlungen beim Check-out können direkt aus der Buchung übernommen werden (Hund, Halter/in, Betrag, Zahlungsart); bezahlte Rechnungen (Überweisung) werden separat erfasst und laufen nicht durch die Kasse. Auswertungen für die Geschäftsführung zeigen Laden und Pension getrennt und zusammen.
 
 ### 3.4 Fahrdienstplan
 Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Abholung/Rückbringung» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in.
@@ -118,7 +120,7 @@ aufgabe         id, titel, bereich, verantwortlich_id, faellig, wiederholung, er
 dokument        id, titel, datei, kategorie;   mitteilung   id, titel, text, gelesen_von[]
 
 -- Laden (aus dem Ladenbuch übernommen)
-kasse           datum (PK), erfasst_von, wechselgeld_anfang, bar, karte, twint, bar_ausgaben,
+kasse           standort (laden/pension) + datum (PK), erfasst_von, wechselgeld_anfang, bar, karte, twint, bar_ausgaben,
                 gezaehlt, safebag_betrag, safebag_nr, abgeholt, abgeholt_am, notiz
 uebergabe       id, datum, person, kategorie, text, erledigt
 bestellung      id, typ, datum, person, artikel, menge, kunde, status
@@ -157,7 +159,7 @@ Patrick hat am 18.10.2026 entschieden: Das Intranet wird wie das Salonbuch (haar
 |---|---|---|
 | **0 – Grundgerüst** | Repository, Projekt aufsetzen, Login, Benutzer und Rollen, Profile, Startseite, Layout im NeLuna-Look (Schwarz/Gold wie Ladenbuch) | Alle können sich anmelden |
 | **1 – Laden** | Ladenbuch nachbauen, Daten übernehmen, Ladenbuch-Artefakt danach nur noch lesend | Kassenbuch im Intranet, Laden arbeitet nur noch dort |
-| **2 – Pension** | Kunden- und Hundekartei, Zimmer, Buchungen, Belegungsplan, Tagesplan | Cristina plant die Pension im Intranet |
+| **2 – Pension** | Kunden- und Hundekartei, Zimmer, Buchungen, Belegungsplan, Tagesplan, Kassenbuch Pension | Cristina plant die Pension im Intranet |
 | **3 – Fahrdienst und Kalender** | Fahrten aus Buchungen, Fahreransicht, Fahrzeuge mit Garagen- und Unterhaltsterminen, gemeinsamer Kalender | Ein Kalender für alles |
 | **4 – Kommunikation** | Chat, Mitteilungen, Push-Benachrichtigungen | WhatsApp-Gruppen werden überflüssig |
 | **5 – Personal und Organisation** | Dienstplan, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
