@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
+import { Link } from "react-router";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { addDoc, collection, doc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db, kontoAnlegen } from "../firebase";
@@ -176,7 +177,10 @@ export function BenutzerVerwaltung() {
             <div className="eyebrow">Verwaltung</div>
             <h1>Benutzer</h1>
           </div>
-          {liste && <span className="pill">{liste.filter((b) => b.aktiv).length} aktiv</span>}
+          <div className="actions">
+            {liste && <span className="pill">{liste.filter((b) => b.aktiv).length} aktiv</span>}
+            <Link to="/admin/import" className="btn ghost small">Ladenbuch übernehmen</Link>
+          </div>
         </div>
         {fehler && <p className="notice bad">{fehler}</p>}
         {!liste && !fehler && <p className="hint">Lädt …</p>}

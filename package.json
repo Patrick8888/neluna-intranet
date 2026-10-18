@@ -9,7 +9,7 @@
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run src",
-    "test:regeln": "firebase emulators:exec --only firestore --project demo-neluna \"vitest run tests\"",
+    "test:regeln": "firebase emulators:exec --only firestore --project demo-neluna \"vitest run tests --no-file-parallelism\"",
     "emulator": "firebase emulators:start --only auth,firestore --project demo-neluna",
     "deploy": "npm run build && firebase deploy --only hosting,firestore"
   },

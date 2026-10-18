@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Sicherheitsregeln des NeLuna Intranets. Sie gelten auf dem Server von Firebase:
+// Sicherheitsregeln von NeLuna's Pfötli Buch. Sie gelten auf dem Server von Firebase:
 // was hier nicht erlaubt ist, kann auch niemand an der App vorbei tun.
 // Rollen: siehe src/lib/rollen.ts (Namen müssen übereinstimmen).
 service cloud.firestore {
@@ -96,6 +96,152 @@ service cloud.firestore {
         && request.resource.data.aktion is string;
       allow read: if istAdmin();
       allow update, delete: if false;
+    }
+
+    // ---------- Rollen je Bereich (spiegelt src/lib/rollen.ts) ----------
+
+    function rollen() {
+      return get(ichPfad()).data.rollen;
+    }
+
+    function eineVon(liste) {
+      return aktiv() && rollen().hasAny(liste);
+    }
+
+    // Laden: Geschäftsführung und Leitung Laden verwalten, Verkauf bearbeitet.
+    function ladenBearbeiten() { return eineVon(['geschaeftsfuehrung', 'leitung_laden', 'verkauf']); }
+    function ladenVerwalten() { return eineVon(['geschaeftsfuehrung', 'leitung_laden']); }
+
+    // Wochenbericht: Verkauf liest, Leitung Laden schreibt.
+    function wbLesen() { return eineVon(['geschaeftsfuehrung', 'leitung_laden', 'verkauf']); }
+    function wbSchreiben() { return eineVon(['geschaeftsfuehrung', 'leitung_laden']); }
+
+    // Sitzungen: Team lesen alle, schreiben die Leitungen; Kader nur Geschäftsführung und Leitungen.
+    function teamLesen() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'leitung_laden', 'verkauf', 'mitarbeit_pension', 'fahrdienst']); }
+    function sitzungSchreiben() { return eineVon(['geschaeftsfuehrung', 'leitung_pension', 'leitung_laden']); }
+    function sitzungLoeschen() { return eineVon(['geschaeftsfuehrung']); }
+
+    function text(d, feld, max) {
+      return !(feld in d) || (d[feld] is string && d[feld].size() <= max);
+    }
+
+    function betrag(d, feld) {
+      return d[feld] is number && d[feld] > -1000000 && d[feld] < 1000000;
+    }
+
+    // Neue Einträge tragen immer die eigene Benutzer-ID.
+    function vonMir() {
+      return request.resource.data.uid == request.auth.uid
+        && request.resource.data.person is string && request.resource.data.person.size() <= 100;
+    }
+
+    function nurFelder(felder) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(felder);
+    }
+
+    // Eigene Einträge darf man löschen, fremde nur die Leitung.
+    function eigenerOderLeitung() {
+      return ladenVerwalten() || (ladenBearbeiten() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---------- Laden ----------
+
+    match /kasse/{id} {
+      function gueltigeKasse(d) {
+        return d.keys().hasOnly(['standort', 'datum', 'person', 'uid', 'anfang', 'bar', 'karte', 'twint', 'ausgaben', 'gezaehlt',
+            'safebagBetrag', 'safebagNr', 'notiz', 'total', 'soll', 'differenz', 'wechselgeldNeu', 'abgeholt', 'abgeholtAm', 'geaendertAm'])
+          && d.standort == 'laden'
+          && id == d.standort + '_' + d.datum
+          && d.datum is string && d.datum.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
+          && betrag(d, 'anfang') && betrag(d, 'bar') && betrag(d, 'karte') && betrag(d, 'twint') && betrag(d, 'ausgaben')
+          && betrag(d, 'gezaehlt') && betrag(d, 'safebagBetrag') && betrag(d, 'total') && betrag(d, 'soll')
+          && betrag(d, 'differenz') && betrag(d, 'wechselgeldNeu')
+          && d.abgeholt is bool && text(d, 'abgeholtAm', 10) && text(d, 'safebagNr', 40) && text(d, 'notiz', 2000);
+      }
+      allow read: if ladenBearbeiten();
+      allow create: if ladenBearbeiten() && vonMir() && gueltigeKasse(request.resource.data);
+      // Ganzer Abschluss neu (wer zuletzt speichert, steht drin) oder nur die Loomis-Abholung.
+      allow update: if ladenBearbeiten() && gueltigeKasse(request.resource.data)
+        && ((vonMir() && request.resource.data.standort == resource.data.standort)
+            || nurFelder(['abgeholt', 'abgeholtAm']));
+      allow delete: if ladenVerwalten();
+    }
+
+    match /laden_uebergabe/{id} {
+      allow read: if ladenBearbeiten();
+      allow create: if ladenBearbeiten() && vonMir()
+        && request.resource.data.keys().hasOnly(['datum', 'erstellt', 'person', 'uid', 'kategorie', 'text', 'pendenz', 'wichtig', 'erledigt', 'erledigtVon', 'erledigtAm'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 4000
+        && request.resource.data.pendenz is bool && request.resource.data.wichtig is bool && request.resource.data.erledigt is bool;
+      allow update: if ladenBearbeiten() && nurFelder(['erledigt', 'erledigtVon', 'erledigtAm'])
+        && request.resource.data.erledigt is bool && text(request.resource.data, 'erledigtVon', 100);
+      allow delete: if eigenerOderLeitung();
+    }
+
+    match /laden_bestellungen/{id} {
+      allow read: if ladenBearbeiten();
+      allow create: if ladenBearbeiten() && vonMir()
+        && request.resource.data.keys().hasOnly(['typ', 'datum', 'erstellt', 'person', 'uid', 'artikel', 'menge', 'lieferant', 'kunde', 'telefon', 'notiz', 'status'])
+        && request.resource.data.artikel is string && request.resource.data.artikel.size() > 0 && request.resource.data.artikel.size() <= 300
+        && request.resource.data.typ in ['Kundenbestellung', 'Nachbestellung']
+        && request.resource.data.status in ['Offen', 'Bestellt', 'Eingetroffen', 'Abgeholt', 'Storniert'];
+      allow update: if ladenBearbeiten() && nurFelder(['status'])
+        && request.resource.data.status in ['Offen', 'Bestellt', 'Eingetroffen', 'Abgeholt', 'Storniert'];
+      allow delete: if eigenerOderLeitung();
+    }
+
+    match /laden_reklamationen/{id} {
+      allow read: if ladenBearbeiten();
+      allow create: if ladenBearbeiten() && vonMir()
+        && request.resource.data.keys().hasOnly(['datum', 'erstellt', 'person', 'uid', 'kunde', 'artikel', 'grund', 'loesung', 'betrag', 'status'])
+        && request.resource.data.artikel is string && request.resource.data.artikel.size() > 0
+        && request.resource.data.grund is string && request.resource.data.grund.size() > 0
+        && betrag(request.resource.data, 'betrag')
+        && request.resource.data.status in ['Offen', 'Beim Lieferanten', 'Erledigt'];
+      allow update: if ladenBearbeiten() && nurFelder(['status'])
+        && request.resource.data.status in ['Offen', 'Beim Lieferanten', 'Erledigt'];
+      allow delete: if eigenerOderLeitung();
+    }
+
+    match /laden_loomis/{id} {
+      allow read: if ladenBearbeiten();
+      allow create: if ladenBearbeiten() && vonMir()
+        && request.resource.data.keys().hasOnly(['typ', 'datum', 'erstellt', 'person', 'uid', 'betrag', 'notiz'])
+        && betrag(request.resource.data, 'betrag') && text(request.resource.data, 'notiz', 1000);
+      allow update: if false;
+      allow delete: if eigenerOderLeitung();
+    }
+
+    match /laden_wochenberichte/{montag} {
+      allow read: if wbLesen();
+      allow create, update: if wbSchreiben() && vonMir()
+        && request.resource.data.woche == montag
+        && request.resource.data.keys().hasOnly(['woche', 'person', 'uid', 'gespeichert', 'zahlen',
+             'umsatz', 'personal', 'sortiment', 'reklamationen', 'laden', 'anliegen', 'naechste']);
+      allow delete: if ladenVerwalten();
+    }
+
+    // ---------- Sitzungen ----------
+
+    function gueltigesProtokoll(d) {
+      return d.keys().hasOnly(['datum', 'zeit', 'ort', 'leitung', 'protokoll', 'anwesend', 'abwesend', 't', 'pendenzen', 'naechste', 'gespeichert', 'uid', 'person'])
+        && d.datum is string && d.anwesend is list && d.t is list && d.pendenzen is list
+        && d.uid == request.auth.uid;
+    }
+
+    match /sitzungen_team/{id} {
+      allow read: if teamLesen();
+      allow create, update: if sitzungSchreiben() && gueltigesProtokoll(request.resource.data);
+      // Pendenzen abhaken dürfen alle, die das Protokoll lesen.
+      allow update: if teamLesen() && nurFelder(['pendenzen'])
+        && request.resource.data.pendenzen.size() == resource.data.pendenzen.size();
+      allow delete: if sitzungLoeschen();
+    }
+
+    match /sitzungen_kader/{id} {
+      allow read: if sitzungSchreiben();
+      allow create, update: if sitzungSchreiben() && gueltigesProtokoll(request.resource.data);
+      allow delete: if sitzungLoeschen();
     }
 
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.

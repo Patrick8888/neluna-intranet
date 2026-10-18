@@ -5,9 +5,15 @@ import { darf, STUFE, type Modul, type Stufe } from "./lib/rollen";
 import { BenutzerVerwaltung } from "./seiten/Benutzer";
 import { Einrichtung } from "./seiten/Einrichtung";
 import { Login } from "./seiten/Login";
+import { Import } from "./seiten/Import";
 import { Profil } from "./seiten/Profil";
 import { KeinZugang, Rahmen } from "./seiten/Rahmen";
 import { Start } from "./seiten/Start";
+import { Bestellungen, Loomis, Reklamationen, Uebergabe } from "./laden/Eintraege";
+import { Kasse } from "./laden/Kasse";
+import { Laden } from "./laden/Laden";
+import { Wochenbericht } from "./laden/Wochenbericht";
+import { Sitzungen } from "./sitzungen/Sitzungen";
 
 /** Zeigt die Seite nur mit genügender Berechtigung (die Datenbankregeln prüfen zusätzlich). */
 function Berechtigt({ modul, mindestens = STUFE.lesen, children }: { modul: Modul; mindestens?: Stufe; children: ReactNode }) {
@@ -35,7 +41,18 @@ function Inhalt() {
       <Route element={<Rahmen />}>
         <Route index element={<Start />} />
         <Route path="profil" element={<Profil />} />
+        <Route path="laden" element={<Berechtigt modul="laden"><Laden /></Berechtigt>}>
+          <Route index element={<Navigate to="kasse" replace />} />
+          <Route path="kasse" element={<Kasse />} />
+          <Route path="uebergabe" element={<Uebergabe />} />
+          <Route path="bestellungen" element={<Bestellungen />} />
+          <Route path="reklamationen" element={<Reklamationen />} />
+          <Route path="loomis" element={<Loomis />} />
+          <Route path="wochenbericht" element={<Berechtigt modul="laden_wochenbericht"><Wochenbericht /></Berechtigt>} />
+        </Route>
+        <Route path="sitzungen" element={<Berechtigt modul="sitzungen_team"><Sitzungen /></Berechtigt>} />
         <Route path="admin/benutzer" element={<Berechtigt modul="admin" mindestens={STUFE.verwalten}><BenutzerVerwaltung /></Berechtigt>} />
+        <Route path="admin/import" element={<Berechtigt modul="admin" mindestens={STUFE.verwalten}><Import /></Berechtigt>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>
