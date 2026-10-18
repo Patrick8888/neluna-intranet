@@ -136,6 +136,17 @@ describe("Tagesplan und Übergabe", () => {
   });
 });
 
+describe("Preise", () => {
+  const preise = (uid: string, w: Record<string, unknown> = {}) => ({ tagesbetreuung: 65, uebernachtung: 20, person: uid, uid, ...w });
+  it("alle im Team sehen die Preise, ändern darf nur die Leitung", async () => {
+    await assertSucceeds(setDoc(doc(als("cristina"), "pension_einstellungen/preise"), preise("cristina")));
+    await assertSucceeds(getDoc(doc(als("laura"), "pension_einstellungen/preise")));
+    await assertFails(setDoc(doc(als("sina"), "pension_einstellungen/preise"), preise("sina")));
+    await assertFails(setDoc(doc(als("cristina"), "pension_einstellungen/preise"), preise("cristina", { tagesbetreuung: "65" })));
+    await assertFails(setDoc(doc(als("cristina"), "pension_einstellungen/anderes"), preise("cristina")));
+  });
+});
+
 describe("Kassenbuch Pension", () => {
   it("Mitarbeit Pension erfasst den Tagesabschluss, der Laden hat keinen Zugriff", async () => {
     await assertSucceeds(setDoc(doc(als("sina"), "kasse/pension_2026-10-18"), abschluss("sina")));
@@ -148,6 +159,13 @@ describe("Kassenbuch Pension", () => {
     await assertFails(getDocs(query(collection(als("sina"), "kasse"), where("standort", "==", "laden"))));
     await assertFails(setDoc(doc(als("sina"), "kasse/laden_2026-10-18"), abschluss("sina", { standort: "laden" })));
     await assertSucceeds(getDocs(query(collection(als("pädi"), "kasse"), where("standort", "==", "laden"))));
+  });
+
+  it("Hofladen und MWST gehören zum Abschluss der Pension, nicht zum Laden", async () => {
+    const hof = { hofFutter: 102.6, hofZubehoer: 50, umsatz81: 397.4, umsatz26: 102.6, mwst81: 29.78, mwst26: 2.6 };
+    await assertSucceeds(setDoc(doc(als("sina"), "kasse/pension_2026-10-18"), abschluss("sina", hof)));
+    await assertFails(setDoc(doc(als("sina"), "kasse/pension_2026-10-19"), abschluss("sina", { ...hof, datum: "2026-10-19", mwst26: "2.60" })));
+    await assertFails(setDoc(doc(als("rahel"), "kasse/laden_2026-10-18"), abschluss("rahel", { ...hof, standort: "laden" })));
   });
 
   it("ein noch fehlender Abschluss lässt sich abfragen (für die Erinnerung am Abend)", async () => {

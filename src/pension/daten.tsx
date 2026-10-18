@@ -1,10 +1,10 @@
 // Live-Daten der Pension: alle Bereiche teilen sich dieselben Abos.
 import { createContext, use, useEffect, useState, type ReactNode } from "react";
-import { collection, limit, onSnapshot, orderBy, query, where, type Query } from "firebase/firestore";
+import { collection, doc, limit, onSnapshot, orderBy, query, where, type Query } from "firebase/firestore";
 import { db } from "../firebase";
 import { meldung } from "../lib/fehler";
 import type { Kasse, Uebergabe } from "../lib/laden";
-import { zimmerListe, type Buchung, type Hund, type Kunde, type Zimmer } from "../lib/pension";
+import { preiseAus, STANDARD_PREISE, zimmerListe, type Buchung, type Hund, type Kunde, type Preise, type Zimmer } from "../lib/pension";
 
 export type PensionDaten = {
   zimmer: Zimmer[];
@@ -13,13 +13,14 @@ export type PensionDaten = {
   buchungen: Buchung[];
   uebergabe: Uebergabe[];
   kasse: Kasse[];
+  preise: Preise;
   bereit: boolean;
   fehler: string;
 };
 
-type Feld = keyof Omit<PensionDaten, "bereit" | "fehler">;
+type Feld = keyof Omit<PensionDaten, "bereit" | "fehler" | "preise">;
 
-const LEER: PensionDaten = { zimmer: zimmerListe([]), kunden: [], hunde: [], buchungen: [], uebergabe: [], kasse: [], bereit: false, fehler: "" };
+const LEER: PensionDaten = { zimmer: zimmerListe([]), kunden: [], hunde: [], buchungen: [], uebergabe: [], kasse: [], preise: STANDARD_PREISE, bereit: false, fehler: "" };
 
 const Kontext = createContext<PensionDaten>(LEER);
 
@@ -54,6 +55,8 @@ export function PensionProvider({ mitTeam, mitKasse, children }: { mitTeam: bool
         (err) => setDaten((d) => ({ ...d, fehler: meldung(err) })),
       ),
     );
+    // Preise: ohne Eintrag gelten die Standardpreise.
+    stopp.push(onSnapshot(doc(db, "pension_einstellungen", "preise"), (snap) => setDaten((d) => ({ ...d, preise: preiseAus(snap.data()) })), () => {}));
     return () => stopp.forEach((s) => s());
   }, [mitTeam, mitKasse]);
 

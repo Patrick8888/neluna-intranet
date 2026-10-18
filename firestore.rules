@@ -172,13 +172,16 @@ service cloud.firestore {
     match /kasse/{id} {
       function gueltigeKasse(d) {
         return d.keys().hasOnly(['standort', 'datum', 'person', 'uid', 'anfang', 'bar', 'karte', 'twint', 'ausgaben', 'gezaehlt',
-            'safebagBetrag', 'safebagNr', 'notiz', 'total', 'soll', 'differenz', 'wechselgeldNeu', 'abgeholt', 'abgeholtAm', 'geaendertAm'])
+            'safebagBetrag', 'safebagNr', 'notiz', 'total', 'soll', 'differenz', 'wechselgeldNeu', 'abgeholt', 'abgeholtAm', 'geaendertAm',
+            'hofFutter', 'hofZubehoer', 'umsatz81', 'umsatz26', 'mwst81', 'mwst26'])
           && d.standort in ['laden', 'pension']
           && id == d.standort + '_' + d.datum
           && d.datum is string && d.datum.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}')
           && betrag(d, 'anfang') && betrag(d, 'bar') && betrag(d, 'karte') && betrag(d, 'twint') && betrag(d, 'ausgaben')
           && betrag(d, 'gezaehlt') && betrag(d, 'safebagBetrag') && betrag(d, 'total') && betrag(d, 'soll')
           && betrag(d, 'differenz') && betrag(d, 'wechselgeldNeu')
+          && (!('hofFutter' in d) || (d.standort == 'pension' && betrag(d, 'hofFutter') && betrag(d, 'hofZubehoer')
+              && betrag(d, 'umsatz81') && betrag(d, 'umsatz26') && betrag(d, 'mwst81') && betrag(d, 'mwst26')))
           && d.abgeholt is bool && text(d, 'abgeholtAm', 10) && text(d, 'safebagNr', 40) && text(d, 'notiz', 2000);
       }
       // Einzelner Abschluss: der Standort steht in der ID (auch wenn es den Abschluss noch nicht gibt).
@@ -293,6 +296,16 @@ service cloud.firestore {
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
         && request.resource.data.maxHunde is int && request.resource.data.maxHunde >= 1 && request.resource.data.maxHunde <= 10
         && request.resource.data.aktiv is bool && text(request.resource.data, 'notiz', 500);
+    }
+
+    // Preise der Pension (CHF pro Hund); ohne Eintrag gelten die Standardpreise der App.
+    match /pension_einstellungen/{id} {
+      allow read: if pensionLesen();
+      allow write: if pensionVerwalten() && id == 'preise'
+        && request.resource.data.keys().hasOnly(['tagesbetreuung', 'uebernachtung', 'person', 'uid'])
+        && request.resource.data.tagesbetreuung is number && request.resource.data.tagesbetreuung >= 0 && request.resource.data.tagesbetreuung < 10000
+        && request.resource.data.uebernachtung is number && request.resource.data.uebernachtung >= 0 && request.resource.data.uebernachtung < 10000
+        && vonMir();
     }
 
     match /pension_kunden/{id} {
