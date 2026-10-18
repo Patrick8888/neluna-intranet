@@ -1,6 +1,6 @@
-# NeLuna Intranet – Konzept
+# NeLuna's Pfötli Buch – Konzept
 
-Stand: 17. Oktober 2026 · Version 1 (Entwurf zur Freigabe)
+Stand: 18. Oktober 2026 · Version 2 · Das Intranet heisst «NeLuna's Pfötli Buch».
 
 ## 1. Ziel
 
