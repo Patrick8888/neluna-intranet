@@ -276,11 +276,20 @@ service cloud.firestore {
       return d[feld] is string && d[feld].matches('[0-9]{4}-[0-9]{2}-[0-9]{2}');
     }
 
+    // Plätze je Gewichtsklasse (bis 25 kg, 25–45 kg, ab 45 kg); 0 heisst: diese Grösse passt nicht.
+    function gueltigePlaetze(p) {
+      return p is map && p.keys().hasOnly(['klein', 'mittel', 'gross']) && p.keys().hasAll(['klein', 'mittel', 'gross'])
+        && p.klein is int && p.klein >= 0 && p.klein <= 10
+        && p.mittel is int && p.mittel >= 0 && p.mittel <= 10
+        && p.gross is int && p.gross >= 0 && p.gross <= 10;
+    }
+
     match /pension_zimmer/{id} {
       allow read: if pensionLesen();
       allow write: if pensionVerwalten()
         && id.matches('zimmer-[0-9]+')
-        && request.resource.data.keys().hasOnly(['name', 'maxHunde', 'aktiv', 'notiz'])
+        && request.resource.data.keys().hasOnly(['name', 'maxHunde', 'plaetze', 'aktiv', 'notiz'])
+        && (!('plaetze' in request.resource.data) || gueltigePlaetze(request.resource.data.plaetze))
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40
         && request.resource.data.maxHunde is int && request.resource.data.maxHunde >= 1 && request.resource.data.maxHunde <= 10
         && request.resource.data.aktiv is bool && text(request.resource.data, 'notiz', 500);
@@ -288,7 +297,10 @@ service cloud.firestore {
 
     match /pension_kunden/{id} {
       function gueltigerKunde(d) {
-        return d.keys().hasOnly(['name', 'telefon', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'notiz', 'erstellt', 'person', 'uid'])
+        return d.keys().hasOnly(['name', 'telefon', 'telefon2', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'versicherung', 'team', 'notiz',
+            'erstellt', 'person', 'uid'])
+          && (!('team' in d) || d.team is bool)
+          && text(d, 'telefon2', 40) && text(d, 'versicherung', 200)
           && d.name is string && d.name.size() > 0 && d.name.size() <= 120
           && text(d, 'telefon', 40) && text(d, 'email', 200) && text(d, 'adresse', 300)
           && text(d, 'notfallkontakt', 200) && text(d, 'tierarzt', 200) && text(d, 'notiz', 4000);
@@ -296,14 +308,20 @@ service cloud.firestore {
       allow read: if pensionLesen();
       allow create: if pensionBearbeiten() && vonMir() && gueltigerKunde(request.resource.data);
       allow update: if pensionBearbeiten() && gueltigerKunde(request.resource.data)
-        && nurFelder(['name', 'telefon', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'notiz']);
+        && nurFelder(['name', 'telefon', 'telefon2', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'versicherung', 'team', 'notiz']);
       allow delete: if pensionVerwalten();
     }
 
     match /pension_hunde/{id} {
       function gueltigerHund(d) {
         return d.keys().hasOnly(['kundeId', 'name', 'rasse', 'geburtsdatum', 'geschlecht', 'kastriert', 'futter', 'menge', 'medikamente',
-            'allergien', 'verhalten', 'vertraeglich', 'notiz', 'impfungen', 'erstellt', 'person', 'uid'])
+            'allergien', 'verhalten', 'vertraeglich', 'notiz', 'impfungen', 'erstellt', 'person', 'uid',
+            'gewicht', 'gewichtsklasse', 'chipnummer', 'farbe', 'fuetterungszeiten', 'leckerli', 'schlafplatz', 'kommandos',
+            'aengste', 'spielverhalten', 'freilauf', 'laeufigkeit'])
+          && (!('gewichtsklasse' in d) || d.gewichtsklasse in ['', 'klein', 'mittel', 'gross'])
+          && text(d, 'gewicht', 20) && text(d, 'chipnummer', 40) && text(d, 'farbe', 100) && text(d, 'fuetterungszeiten', 500)
+          && text(d, 'leckerli', 500) && text(d, 'schlafplatz', 500) && text(d, 'kommandos', 1000) && text(d, 'aengste', 1000)
+          && text(d, 'spielverhalten', 1000) && text(d, 'freilauf', 500) && text(d, 'laeufigkeit', 200)
           && d.kundeId is string && d.kundeId.size() > 0
           && d.name is string && d.name.size() > 0 && d.name.size() <= 80
           && d.kastriert is bool && d.vertraeglich is bool
@@ -413,7 +431,7 @@ service cloud.firestore {
         return d.keys().hasOnly(['fahrzeugId', 'art', 'datum', 'zeit', 'garage', 'kosten', 'kmStand', 'faelligKm', 'blockiert',
             'wiederholungMonate', 'wiederholungKm', 'notiz', 'erledigt', 'erledigtAm', 'erstellt', 'person', 'uid'])
           && d.fahrzeugId is string && d.fahrzeugId.size() > 0
-          && d.art in ['Reifenwechsel', 'Service', 'MFK', 'Versicherung', 'Vignette', 'Reparatur', 'Reinigung Hundeboxen', 'Anderes']
+          && d.art in ['Reifenwechsel', 'Service', 'MFK', 'Versicherung', 'Vignette', 'Reparatur', 'Reinigung Hundeboxen', 'Problem', 'Anderes']
           && datumOk(d, 'datum')
           && betrag(d, 'kosten')
           && d.kmStand is int && d.kmStand >= 0 && d.faelligKm is int && d.faelligKm >= 0

@@ -81,6 +81,30 @@ function TerminFormular({ fz, vorhanden, fertig, zeigen }: { fz: Fahrzeug; vorha
   );
 }
 
+function ProblemMelden({ fz, fertig, zeigen }: { fz: Fahrzeug; fertig: () => void; zeigen: (t: string) => void }) {
+  const ich = useIch();
+  const [text, setText] = useState("");
+  const [blockiert, setBlockiert] = useState(false);
+
+  async function absenden(e: FormEvent) {
+    e.preventDefault();
+    if (!text.trim()) return zeigen("Bitte beschreiben, was los ist");
+    const ok = await speichern(zeigen, () => addDoc(collection(db, "fahrzeug_termine"), {
+      fahrzeugId: fz.id, art: "Problem", datum: heute(), zeit: "", garage: "", kosten: 0, kmStand: fz.kmStand, faelligKm: 0, blockiert,
+      wiederholungMonate: 0, wiederholungKm: 0, notiz: text.trim(), erledigt: false, erledigtAm: "", erstellt: zeitstempel(), person: ich.name, uid: ich.uid,
+    }), "Problem gemeldet");
+    if (ok) fertig();
+  }
+
+  return (
+    <form className="grid" onSubmit={absenden}>
+      <label className="wide">Was ist los?<textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="z. B. Bremsen quietschen, Kontrolllampe leuchtet, Hundebox klemmt, Kratzer hinten links" required /></label>
+      <label className="check wide"><input type="checkbox" checked={blockiert} onChange={(e) => setBlockiert(e.target.checked)} /> Fahrzeug ist nicht fahrbereit (für den Fahrdienst gesperrt, bis das Problem erledigt ist)</label>
+      <div className="wide actions"><button className="btn">Problem melden</button><button className="btn ghost" type="button" onClick={fertig}>Abbrechen</button></div>
+    </form>
+  );
+}
+
 function Abschliessen({ t, fz, fertig, zeigen }: { t: FahrzeugTermin; fz: Fahrzeug; fertig: () => void; zeigen: (x: string) => void }) {
   const ich = useIch();
   const [tag, setTag] = useState(heute());
@@ -122,18 +146,20 @@ function TerminZeile({ t, fz, zeigen }: { t: FahrzeugTermin; fz: Fahrzeug; zeige
   return (
     <article className={`item${t.erledigt ? " done" : ""}`}>
       <div className="item-row">
-        <strong>{t.art}{t.garage ? ` · ${t.garage}` : ""}</strong>
-        {t.erledigt ? <span className="pill good">Erledigt {datum(t.erledigtAm)}</span> : t.blockiert ? <span className="pill warn">Fahrzeug in der Garage</span> : null}
+        <strong>{t.art === "Problem" ? `Problem: ${t.notiz}` : `${t.art}${t.garage ? ` · ${t.garage}` : ""}`}</strong>
+        {t.erledigt ? <span className="pill good">Erledigt {datum(t.erledigtAm)}</span>
+          : t.art === "Problem" ? <span className="pill bad">{t.blockiert ? "nicht fahrbereit" : "offen"}</span>
+          : t.blockiert ? <span className="pill warn">Fahrzeug in der Garage</span> : null}
       </div>
       <div className="meta">
-        {nurKm && !t.erledigt ? <span>fällig bei {km(t.faelligKm)}</span> : <span>{wochentagKurz(t.datum)} {datum(t.datum)}{t.zeit ? `, ${t.zeit}` : ""}</span>}
+        {nurKm && !t.erledigt ? <span>fällig bei {km(t.faelligKm)}</span> : <span>{t.art === "Problem" ? "gemeldet " : ""}{wochentagKurz(t.datum)} {datum(t.datum)}{t.zeit ? `, ${t.zeit}` : ""}{t.art === "Problem" && t.person ? ` von ${t.person}` : ""}</span>}
         {t.erledigt && t.kosten > 0 && <span>CHF {chf(t.kosten)}</span>}
         {t.erledigt && t.kmStand > 0 && <span>{km(t.kmStand)}</span>}
         {(t.wiederholungMonate > 0 || t.wiederholungKm > 0) && (
           <span>wiederkehrend {[t.wiederholungMonate ? `alle ${t.wiederholungMonate} Monate` : "", t.wiederholungKm ? `alle ${km(t.wiederholungKm)}` : ""].filter(Boolean).join(" oder ")}</span>
         )}
       </div>
-      {t.notiz && <p>{t.notiz}</p>}
+      {t.notiz && t.art !== "Problem" && <p>{t.notiz}</p>}
       {modus === "bearbeiten" && <TerminFormular fz={fz} vorhanden={t} fertig={() => setModus("")} zeigen={zeigen} />}
       {modus === "abschliessen" && <Abschliessen t={t} fz={fz} fertig={() => setModus("")} zeigen={zeigen} />}
       {!modus && (
@@ -192,7 +218,7 @@ function KmErfassen({ fz, zeigen }: { fz: Fahrzeug; zeigen: (t: string) => void 
 function FahrzeugKarte({ fz, zeigen, offen }: { fz: Fahrzeug; zeigen: (t: string) => void; offen: boolean }) {
   const ich = useIch();
   const d = useFahrdienst();
-  const [modus, setModus] = useState<"" | "termin" | "fahrzeug">("");
+  const [modus, setModus] = useState<"" | "termin" | "fahrzeug" | "problem">("");
   const verwalten = darf(ich.rollen, "fahrzeuge", STUFE.verwalten);
   const termine = d.termine.filter((t) => t.fahrzeugId === fz.id);
   const offene = termine.filter((t) => !t.erledigt).sort((a, b) => a.datum.localeCompare(b.datum));
@@ -213,16 +239,18 @@ function FahrzeugKarte({ fz, zeigen, offen }: { fz: Fahrzeug; zeigen: (t: string
       {fz.notiz && <p className="hint">{fz.notiz}</p>}
       {modus === "fahrzeug" && <FahrzeugFormular vorhanden={fz} fertig={() => setModus("")} zeigen={zeigen} />}
       {modus === "termin" && <TerminFormular fz={fz} fertig={() => setModus("")} zeigen={zeigen} />}
+      {modus === "problem" && <ProblemMelden fz={fz} fertig={() => setModus("")} zeigen={zeigen} />}
       {!modus && (
         <div className="actions">
           <button type="button" className="btn small" onClick={() => setModus("termin")}>Termin eintragen</button>
+          <button type="button" className="btn ghost small" onClick={() => setModus("problem")}>Problem melden</button>
           {verwalten && <button type="button" className="btn ghost small" onClick={() => setModus("fahrzeug")}>Fahrzeug bearbeiten</button>}
         </div>
       )}
       <KmErfassen fz={fz} zeigen={zeigen} />
       <div className="list">
-        <h3 className="lbl">Anstehende Termine</h3>
-        {offene.length ? offene.map((t) => <TerminZeile key={t.id} t={t} fz={fz} zeigen={zeigen} />) : <div className="empty">Keine Termine eingetragen.</div>}
+        <h3 className="lbl">Offene Probleme und anstehende Termine</h3>
+        {offene.length ? offene.map((t) => <TerminZeile key={t.id} t={t} fz={fz} zeigen={zeigen} />) : <div className="empty">Keine Termine eingetragen, keine Probleme gemeldet.</div>}
       </div>
       {erledigte.length > 0 && (
         <details open={offen}>

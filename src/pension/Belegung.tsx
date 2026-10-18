@@ -5,9 +5,11 @@ import { collection, deleteDoc, doc, setDoc, updateDoc } from "firebase/firestor
 import { db } from "../firebase";
 import { useIch } from "../auth";
 import { datum, heute, plusTage, wochentagKurz, zahl, zeitstempel } from "../lib/format";
-import { belegteTage, belegungPruefen, BUCHUNG_STATUS, impfWarnungen, LEISTUNGEN, naechte, type Buchung, type BuchungStatus, type Zimmer } from "../lib/pension";
+import {
+  belegteTage, belegungPruefen, BUCHUNG_STATUS, GEWICHTSKLASSEN, impfWarnungen, LEISTUNGEN, naechte, platzFuer, platzText, type Buchung, type BuchungStatus, type Gewichtsklasse, type Zimmer,
+} from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
-import { LoeschKnopf, speichern, useToast } from "../ui";
+import { LoeschKnopf, speichern, useAngezeigt, useToast } from "../ui";
 import { statusFarbe } from "./BuchungKarte";
 import { usePension } from "./daten";
 
@@ -43,7 +45,7 @@ function Plan({ start, oeffnen }: { start: string; oeffnen: (id: string) => void
             .sort((a, b) => a.tage[0].localeCompare(b.tage[0]));
           return (
             <div key={z.id} className="plan-zeile">
-              <div className="plan-name"><b>{z.name}</b><span>{z.maxHunde === 1 ? "1 Hund" : `${z.maxHunde} Hunde`}</span></div>
+              <div className="plan-name"><b>{z.name}</b><span>{platzText(z)}</span></div>
               <div className="plan-spur" style={spalten}>
                 {balken.map(({ b, tage: [s, e] }) => {
                   const von = s < start ? 0 : tageZwischen(start, s);
@@ -74,6 +76,7 @@ type Werte = { kundeId: string; hundIds: string[]; zimmerId: string; von: string
 
 function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: () => void; zeigen: (t: string) => void }) {
   const ich = useIch();
+  const angezeigt = useAngezeigt();
   const d = usePension();
   const verwalten = darf(ich.rollen, "pension", STUFE.verwalten);
   const [w, setW] = useState<Werte>(() => ({
@@ -114,7 +117,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
       : await speichern(zeigen, () => setDoc(doc(db, "pension_buchungen", id), {
           ...felder, bezahlt: false, zahlungsart: "", betrag: 0, bezahltAm: "", erstellt: zeitstempel(), person: ich.name, uid: ich.uid,
         }), "Buchung gespeichert");
-    if (ok) fertig();
+    if (ok && angezeigt.current) fertig();
   }
 
   return (
@@ -178,7 +181,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
         <div className="wide actions">
           <button className="btn" disabled={!!fehler}>Buchung speichern</button>
           <button className="btn ghost" type="button" onClick={fertig}>Abbrechen</button>
-          {vorhanden && <LoeschKnopf disabled={!verwalten} onLoeschen={() => speichern(zeigen, () => deleteDoc(doc(db, "pension_buchungen", vorhanden.id)), "Gelöscht").then((ok) => ok && fertig())} />}
+          {vorhanden && <LoeschKnopf disabled={!verwalten} onLoeschen={() => speichern(zeigen, () => deleteDoc(doc(db, "pension_buchungen", vorhanden.id)), "Gelöscht").then((ok) => ok && angezeigt.current && fertig())} />}
         </div>
       </form>
     </section>
@@ -189,6 +192,10 @@ function ZimmerEinstellung({ z }: { z: Zimmer }) {
   const { zeigen, element } = useToast();
   const [name, setName] = useState(z.name);
   const [max, setMax] = useState(String(z.maxHunde));
+  // Leer heisst: gleich viele wie «Hunde» insgesamt.
+  const [plaetze, setPlaetze] = useState<Record<Gewichtsklasse, string>>(() => ({
+    klein: z.plaetze ? String(platzFuer(z, "klein")) : "", mittel: z.plaetze ? String(platzFuer(z, "mittel")) : "", gross: z.plaetze ? String(platzFuer(z, "gross")) : "",
+  }));
   const [aktiv, setAktiv] = useState(z.aktiv);
   const [notiz, setNotiz] = useState(z.notiz);
 
@@ -196,16 +203,30 @@ function ZimmerEinstellung({ z }: { z: Zimmer }) {
     e.preventDefault();
     const maxHunde = Math.round(zahl(max));
     if (maxHunde < 1 || maxHunde > 10) return zeigen("Zwischen 1 und 10 Hunden");
-    await speichern(zeigen, () => setDoc(doc(db, "pension_zimmer", z.id), { name: name.trim() || z.name, maxHunde, aktiv, notiz: notiz.trim() }), `${name} gespeichert`);
+    const felder = { name: name.trim() || z.name, maxHunde, aktiv, notiz: notiz.trim() };
+    const mitKlassen = GEWICHTSKLASSEN.some(([k]) => plaetze[k].trim() !== "");
+    const p = Object.fromEntries(GEWICHTSKLASSEN.map(([k]) => [k, plaetze[k].trim() === "" ? maxHunde : Math.min(maxHunde, Math.max(0, Math.round(zahl(plaetze[k]))))]));
+    await speichern(zeigen, () => setDoc(doc(db, "pension_zimmer", z.id), mitKlassen ? { ...felder, plaetze: p } : felder), `${name} gespeichert`);
   }
 
   return (
-    <form className="zimmer-zeile" onSubmit={absenden}>
-      <input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-      <label className="inline">Hunde<input aria-label={`Anzahl Hunde ${z.name}`} type="number" min={1} max={10} value={max} onChange={(e) => setMax(e.target.value)} /></label>
-      <input aria-label="Notiz" value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="Notiz, z. B. mit Auslauf" />
-      <label className="check"><input type="checkbox" checked={aktiv} onChange={(e) => setAktiv(e.target.checked)} /> in Betrieb</label>
-      <button className="btn ghost small">Speichern</button>
+    <form className="item zimmer-form" onSubmit={absenden}>
+      <div className="zimmer-zeile">
+        <input aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+        <label className="inline">Hunde<input aria-label={`Anzahl Hunde ${z.name}`} type="number" min={1} max={10} value={max} onChange={(e) => setMax(e.target.value)} /></label>
+        <input aria-label="Notiz" value={notiz} onChange={(e) => setNotiz(e.target.value)} placeholder="Notiz, z. B. mit Auslauf" />
+        <label className="check"><input type="checkbox" checked={aktiv} onChange={(e) => setAktiv(e.target.checked)} /> in Betrieb</label>
+        <button className="btn ghost small">Speichern</button>
+      </div>
+      <div className="actions">
+        <span className="hint">Platz für Hunde</span>
+        {GEWICHTSKLASSEN.map(([k, titel]) => (
+          <label key={k} className="inline">
+            {titel}
+            <input aria-label={`${titel} ${z.name}`} type="number" min={0} max={10} value={plaetze[k]} placeholder={max} onChange={(e) => setPlaetze({ ...plaetze, [k]: e.target.value })} />
+          </label>
+        ))}
+      </div>
       {element}
     </form>
   );
@@ -261,7 +282,7 @@ export function Belegung() {
       {verwalten && (
         <section className="panel" aria-labelledby="h-zi">
           <h2 id="h-zi">Zimmer</h2>
-          <p className="hint">Wie viele Hunde ein Zimmer aufnimmt, entscheidet ihr hier. Hunde derselben Familie dürfen immer zusammen ins Zimmer. Mit fremden Hunden teilen sie nur, wenn alle in der Kartei als verträglich markiert sind.</p>
+          <p className="hint">Wie viele Hunde ein Zimmer aufnimmt, entscheidet ihr hier. Pro Grösse gilt: so viele Hunde dieser Klasse hätten allein Platz, z. B. 3 bis 25 kg, 2 von 25–45 kg oder 1 ab 45 kg; gemischt rechnet das Intranet anteilig (1 grosser Hund füllt dann das Zimmer, 1 mittlerer und 1 kleiner passen zusammen). 0 heisst: diese Grösse passt nicht ins Zimmer, leer heisst: gleich viele wie «Hunde». Hunde derselben Familie dürfen immer zusammen ins Zimmer. Mit fremden Hunden teilen sie nur, wenn alle in der Kartei als verträglich markiert sind.</p>
           <div className="list">{d.zimmer.map((z) => <ZimmerEinstellung key={z.id} z={z} />)}</div>
         </section>
       )}

@@ -1,7 +1,32 @@
 // Fachlogik der Hundepension (Zimmer, Belegung, Tagesplan, Kassenvorschlag). Unabhängig von Firebase, damit sie testbar bleibt.
 import { datum, plusTage, r2, zahl } from "./format";
 
-export type Zimmer = { id: string; name: string; maxHunde: number; aktiv: boolean; notiz: string };
+/** Gewichtsklassen der Hunde; pro Zimmer lässt sich einstellen, wie viele Hunde jeder Klasse Platz haben. */
+export const GEWICHTSKLASSEN = [
+  ["klein", "bis 25 kg"],
+  ["mittel", "25–45 kg"],
+  ["gross", "ab 45 kg"],
+] as const;
+export type Gewichtsklasse = (typeof GEWICHTSKLASSEN)[number][0];
+export const klassenName = (k?: string) => GEWICHTSKLASSEN.find(([x]) => x === k)?.[1] ?? "";
+
+/** Gewicht in kg (z. B. «28,5») einer Klasse zuordnen; leer, wenn nichts erkennbar ist. */
+export function klasseAusGewicht(gewicht: string): Gewichtsklasse | "" {
+  const kg = parseFloat(gewicht.replace(",", "."));
+  if (!Number.isFinite(kg) || kg <= 0) return "";
+  return kg < 25 ? "klein" : kg <= 45 ? "mittel" : "gross";
+}
+
+export type Zimmer = {
+  id: string;
+  name: string;
+  /** Höchstens so viele Hunde, egal wie gross. */
+  maxHunde: number;
+  /** Plätze je Gewichtsklasse, wenn das Zimmer nur Hunde dieser Klasse hätte (0 = Klasse passt nicht). */
+  plaetze?: Record<Gewichtsklasse, number>;
+  aktiv: boolean;
+  notiz: string;
+};
 
 export type Kunde = {
   id: string;
@@ -12,6 +37,10 @@ export type Kunde = {
   notfallkontakt: string;
   tierarzt: string;
   notiz: string;
+  telefon2?: string;
+  versicherung?: string;
+  /** Hunde des Teams (z. B. von Cristina oder Patrick und Nalan): nicht in der Abrechnung. */
+  team?: boolean;
   erstellt?: string;
   person?: string;
   uid?: string;
@@ -35,6 +64,18 @@ export type Hund = {
   vertraeglich: boolean;
   notiz: string;
   impfungen: Impfung[];
+  gewicht?: string;
+  gewichtsklasse?: Gewichtsklasse | "";
+  chipnummer?: string;
+  farbe?: string;
+  fuetterungszeiten?: string;
+  leckerli?: string;
+  schlafplatz?: string;
+  kommandos?: string;
+  aengste?: string;
+  spielverhalten?: string;
+  freilauf?: string;
+  laeufigkeit?: string;
   erstellt?: string;
   person?: string;
   uid?: string;
@@ -70,19 +111,37 @@ export type Buchung = {
   uid?: string;
 };
 
-/** Die sechs Zimmer der Pension; was im Intranet gespeichert ist, geht vor. */
-export const STANDARD_ZIMMER: Zimmer[] = Array.from({ length: 6 }, (_, i) => ({
-  id: `zimmer-${i + 1}`,
-  name: `Zimmer ${i + 1}`,
-  maxHunde: 1,
-  aktiv: true,
-  notiz: "",
-}));
+const ZIMMER_NAMEN = [
+  "Zimmer 1", "Zimmer 2", "Zimmer 3", "Zimmer 4", "Zimmer 5", "Zimmer 6",
+  "Hundezimmer Hunde Mitarbeiter", "Zimmer Erika", "Zimmer Escobar", "Hinter Schiebetüre",
+];
 
+/** Die Zimmer der Pension; was im Intranet gespeichert ist, geht vor. */
+export const STANDARD_ZIMMER: Zimmer[] = ZIMMER_NAMEN.map((name, i) => ({ id: `zimmer-${i + 1}`, name, maxHunde: 1, aktiv: true, notiz: "" }));
+
+const zimmerNr = (id: string) => Number(id.replace(/\D/g, "")) || 0;
+
+/** Zimmer in fester Reihenfolge (nach Nummer), damit umbenannte Zimmer nicht springen. */
 export function zimmerListe(gespeichert: Zimmer[]): Zimmer[] {
   const alle = new Map(STANDARD_ZIMMER.map((z) => [z.id, z]));
   for (const z of gespeichert) alle.set(z.id, { ...alle.get(z.id), ...z });
-  return [...alle.values()].sort((a, b) => a.name.localeCompare(b.name, "de", { numeric: true }));
+  return [...alle.values()].sort((a, b) => zimmerNr(a.id) - zimmerNr(b.id));
+}
+
+/** Plätze für einen Hund dieser Klasse; ohne Klasse oder ohne Einstellung gilt die Gesamtzahl. */
+export function platzFuer(z: Zimmer, klasse?: string): number {
+  const k = GEWICHTSKLASSEN.find(([x]) => x === klasse)?.[0];
+  return k && z.plaetze ? Math.min(z.plaetze[k], z.maxHunde) : z.maxHunde;
+}
+
+/** Wie voll ein Zimmer mit diesen Hunden ist (1 = voll). Ein Hund ab 45 kg in einem Zimmer «1 gross» füllt es ganz. */
+export function auslastung(z: Zimmer, klassen: (string | undefined)[]): number {
+  return klassen.reduce((s, k) => s + 1 / platzFuer(z, k), 0);
+}
+
+export function platzText(z: Zimmer): string {
+  if (!z.plaetze) return `${z.maxHunde} ${z.maxHunde === 1 ? "Hund" : "Hunde"}`;
+  return GEWICHTSKLASSEN.map(([k, name]) => `${platzFuer(z, k)} ${name}`).join(" · ");
 }
 
 /** Erster und letzter belegter Tag. Am Abholtag ist das Zimmer wieder frei; Tagesgäste belegen einen Tag. */
@@ -108,6 +167,12 @@ export function belegungPruefen(
   const zimmer = d.zimmer.find((z) => z.id === neu.zimmerId);
   if (!zimmer || !zimmer.aktiv) return "Dieses Zimmer ist nicht verfügbar.";
   if (neu.hundIds.length > zimmer.maxHunde) return `${zimmer.name} hat Platz für ${zimmer.maxHunde} ${zimmer.maxHunde === 1 ? "Hund" : "Hunde"}.`;
+  const klasse = (id: string) => d.hunde.find((h) => h.id === id)?.gewichtsklasse;
+  const zuGross = neu.hundIds.find((id) => platzFuer(zimmer, klasse(id)) < 1);
+  if (zuGross) return `«${d.hunde.find((h) => h.id === zuGross)?.name ?? "Ein Hund"}» (${klassenName(klasse(zuGross))}) passt nicht in ${zimmer.name}.`;
+  // Kleine Toleranz, weil 1/3 + 1/3 + 1/3 in Gleitkomma nicht ganz 1 ergibt.
+  const voll = (ids: string[]) => auslastung(zimmer, ids.map(klasse)) > 1.000001;
+  if (voll(neu.hundIds)) return `${zimmer.name} ist für diese Hunde zu klein (${platzText(zimmer)}).`;
 
   const [start, ende] = belegteTage(neu);
   const ueberlappt = (b: Buchung) => {
@@ -127,12 +192,15 @@ export function belegungPruefen(
 
   const imZimmer = andere.filter((b) => b.zimmerId === neu.zimmerId);
   for (let tag = start; tag <= ende; tag = plusTage(tag, 1)) {
-    const belegt = imZimmer.filter((b) => {
+    const da = imZimmer.filter((b) => {
       const [s, e] = belegteTage(b);
       return s <= tag && tag <= e;
-    }).reduce((n, b) => n + b.hunde.length, 0);
-    if (belegt + neu.hundIds.length > zimmer.maxHunde) {
-      return `${zimmer.name} ist am ${datum(tag)} voll (${belegt} von ${zimmer.maxHunde} Plätzen belegt).`;
+    }).flatMap((b) => b.hunde.map((h) => h.id));
+    if (da.length + neu.hundIds.length > zimmer.maxHunde) {
+      return `${zimmer.name} ist am ${datum(tag)} voll (${da.length} von ${zimmer.maxHunde} Plätzen belegt).`;
+    }
+    if (voll([...da, ...neu.hundIds])) {
+      return `${zimmer.name} ist am ${datum(tag)} voll: zu wenig Platz für diese Grösse (${platzText(zimmer)}).`;
     }
   }
 
@@ -186,3 +254,57 @@ export function bargeldSumme(anzahl: Record<string, string | number>): number {
 export function naechte(b: { von: string; bis: string }): number {
   return Math.max(0, Math.round((Date.parse(b.bis) - Date.parse(b.von)) / 864e5));
 }
+
+export type AbrechnungZeile = {
+  kunde: string;
+  hund: string;
+  /** Übernachtungen im Monat (Ferienbetreuung). */
+  naechte: number;
+  /** Anwesende Tage im Monat, Ankunfts- und Abholtag mitgezählt (Ferienbetreuung). */
+  tage: number;
+  /** Tagesgäste: gebracht und am selben Tag wieder abgeholt. */
+  tagesbetreuung: number;
+  aufenthalte: number;
+};
+
+/** Tage pro Hund in einem Monat («JJJJ-MM») für die Rechnung. Ohne Anfragen, Stornos und Teamhunde. */
+export function abrechnungTage(buchungen: Buchung[], kunden: Kunde[], monat: string): AbrechnungZeile[] {
+  const team = new Set(kunden.filter((k) => k.team).map((k) => k.id));
+  const zeilen = new Map<string, AbrechnungZeile>();
+  for (const b of buchungen) {
+    if (b.status === "Storniert" || b.status === "Anfrage" || team.has(b.kundeId)) continue;
+    if (b.bis.slice(0, 7) < monat || b.von.slice(0, 7) > monat) continue;
+    for (const h of b.hunde) {
+      const z = zeilen.get(h.id) ?? { kunde: b.kundeName, hund: h.name, naechte: 0, tage: 0, tagesbetreuung: 0, aufenthalte: 0 };
+      if (b.von === b.bis) {
+        if (b.von.startsWith(monat)) z.tagesbetreuung++;
+        else continue;
+      } else {
+        for (let t = b.von; t <= b.bis; t = plusTage(t, 1)) {
+          if (!t.startsWith(monat)) continue;
+          z.tage++;
+          if (t < b.bis) z.naechte++;
+        }
+      }
+      z.aufenthalte++;
+      zeilen.set(h.id, z);
+    }
+  }
+  return [...zeilen.values()].sort((a, b) => a.kunde.localeCompare(b.kunde, "de") || a.hund.localeCompare(b.hund, "de"));
+}
+
+/** CSV der Abrechnung (Semikolon, Excel-tauglich mit BOM). */
+export function abrechnungCsv(zeilen: AbrechnungZeile[]): string {
+  const q = (x: unknown) => {
+    const s = String(x ?? "");
+    return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+  const kopf = ["Kundin / Kunde", "Hund", "Ferien: Nächte", "Ferien: Tage", "Tagesbetreuung: Tage", "Aufenthalte"];
+  return "\uFEFF" + [kopf.join(";"), ...zeilen.map((z) => [z.kunde, z.hund, z.naechte, z.tage, z.tagesbetreuung, z.aufenthalte].map(q).join(";"))].join("\r\n");
+}
+
+/** Die Hunde des Teams, die im Intranet als eigene Kartei-Einträge geführt werden. */
+export const TEAMHUNDE: { kunde: string; hunde: string[] }[] = [
+  { kunde: "Cristina de Oliveira (Team)", hunde: ["Buffy", "Yasha", "Lou"] },
+  { kunde: "Patrick und Nalan Schaub (Team)", hunde: ["Escobar", "Benji", "Peppy", "Mäxi", "Lina"] },
+];

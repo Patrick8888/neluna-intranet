@@ -94,6 +94,7 @@ describe("Fahrzeuge", () => {
     await assertFails(updateDoc(doc(als("laura"), "fahrzeug_termine/t1"), { person: "laura" }));
     await assertFails(setDoc(doc(als("nic"), "fahrzeug_termine/t2"), garage("nic", { art: "Ölwechsel" })));
     await assertFails(getDocs(collection(als("morena"), "fahrzeug_termine")));
+    await assertSucceeds(setDoc(doc(als("laura"), "fahrzeug_termine/p1"), garage("laura", { art: "Problem", notiz: "Bremsen quietschen", wiederholungMonate: 0 })));
   });
 });
 
