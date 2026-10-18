@@ -192,3 +192,42 @@ details > .grid, details > form { margin-top: 12px; }
   .zimmer-zeile { grid-template-columns: 1fr 1fr; }
   .impf-zeile { grid-template-columns: 1fr 1fr; }
 }
+
+/* Fahrdienst */
+.zeit { color: var(--accent); margin-right: 8px; }
+a.adresse { font-weight: 600; text-decoration: underline; text-underline-offset: 3px; overflow-wrap: anywhere; }
+a.notice { text-decoration: none; display: block; }
+
+/* Kalender: Farben je Ebene */
+.ebene-pension { --e: var(--accent); }
+.ebene-fahrdienst { --e: var(--good); }
+.ebene-fahrzeuge { --e: var(--warn); }
+.ebene-laden { --e: #8fb8e8; }
+.ebene-sitzungen { --e: #c9a2e6; }
+.ebene-personal { --e: var(--bad); }
+.ebene-firma { --e: var(--ink); }
+.chip[class*="ebene-"] { border-color: var(--e); }
+.chip[class*="ebene-"][aria-pressed="true"] { background: color-mix(in srgb, var(--e) 18%, transparent); color: var(--e); }
+.chip[class*="ebene-"][aria-pressed="false"] { opacity: 0.55; }
+.monat { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.monat-kopf { font-size: 0.7rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; text-align: center; padding: 4px 0; }
+.monat-tag { font: inherit; color: var(--ink); text-align: left; background: var(--bg); border: 1px solid var(--line); border-radius: 10px; padding: 4px 5px; min-height: 84px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; min-width: 0; overflow: hidden; }
+.monat-tag.fremd { opacity: 0.45; }
+.monat-tag.heute .monat-nr { background: var(--accent); color: var(--accent-ink); }
+.monat-tag.gewaehlt { border-color: var(--accent); }
+.monat-nr { font-size: 0.8rem; font-weight: 700; align-self: flex-start; border-radius: 999px; padding: 0 6px; }
+.monat-eintrag { font-size: 0.7rem; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid var(--e); padding-left: 4px; color: var(--ink); }
+.k-eintrag { font: inherit; color: var(--ink); text-align: left; text-decoration: none; display: grid; grid-template-columns: 82px minmax(0, 1fr) auto; gap: 10px; align-items: baseline; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px; background: var(--bg); cursor: pointer; width: 100%; }
+.k-eintrag:hover { border-color: var(--frame); }
+.k-zeit { font-size: 0.82rem; color: var(--muted); }
+.k-text { overflow-wrap: anywhere; }
+.k-ebene { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--e); }
+.woche-tag { display: grid; gap: 6px; }
+.woche-tag.heute .woche-titel { color: var(--accent); }
+.woche-titel { font: inherit; background: none; border: 0; padding: 0; text-align: left; cursor: pointer; }
+@media (max-width: 560px) {
+  .monat-tag { min-height: 56px; }
+  .monat-eintrag { font-size: 0; height: 6px; border-left: 0; background: var(--e); border-radius: 3px; padding: 0; }
+  .k-eintrag { grid-template-columns: 64px minmax(0, 1fr); }
+  .k-ebene { grid-column: 2; }
+}
