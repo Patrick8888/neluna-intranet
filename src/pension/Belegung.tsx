@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { useIch } from "../auth";
 import { datum, heute, plusTage, wochentagKurz, zahl, zeitstempel } from "../lib/format";
 import {
-  belegteTage, belegungPruefen, BUCHUNG_STATUS, GEWICHTSKLASSEN, impfWarnungen, LEISTUNGEN, naechte, platzFuer, platzText, type Buchung, type BuchungStatus, type Gewichtsklasse, type Zimmer,
+  belegteTage, belegungPruefen, BUCHUNG_STATUS, GEWICHTSKLASSEN, impfWarnungen, LEISTUNGEN, naechte, platzFuer, preisProHund, platzText, type Buchung, type BuchungStatus, type Gewichtsklasse, type Zimmer,
 } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { LoeschKnopf, speichern, useAngezeigt, useToast } from "../ui";
@@ -97,6 +97,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
   const hundeDesKunden = d.hunde.filter((h) => h.kundeId === w.kundeId);
   const pruefen = (zimmerId: string) => belegungPruefen(d, { id, zimmerId, von: w.von, bis: w.bis, hundIds: w.hundIds });
   const fehler = w.status === "Storniert" ? null : !w.kundeId ? "Bitte eine Kundin oder einen Kunden wählen." : !w.zimmerId ? "Bitte ein Zimmer wählen." : pruefen(w.zimmerId);
+  const preisVorschlag = w.hundIds.length * preisProHund(w, d.preise);
   const warnungen = w.hundIds.flatMap((id) => {
     const h = d.hunde.find((x) => x.id === id);
     return h ? impfWarnungen(h, w.bis, heute()) : [];
@@ -174,6 +175,13 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
           </div>
         </fieldset>
         <label>Preis CHF<input className="num" inputMode="decimal" value={w.preis} onChange={(e) => set({ preis: e.target.value })} placeholder="0.00" /></label>
+        {preisVorschlag > 0 && w.von <= w.bis && (
+          <p className="hint">
+            Nach Preisliste: CHF {preisVorschlag.toFixed(2)}
+            {" "}({w.hundIds.length} {w.hundIds.length === 1 ? "Hund" : "Hunde"} × {naechte(w) + 1} {naechte(w) ? "Tage" : "Tag"} à {d.preise.tagesbetreuung}{naechte(w) ? ` + ${naechte(w)} ${naechte(w) === 1 ? "Nacht" : "Nächte"} à ${d.preise.uebernachtung}` : ""}, ohne Fahrdienst).{" "}
+            {zahl(w.preis) !== preisVorschlag && <button type="button" className="btn ghost small" onClick={() => set({ preis: preisVorschlag.toFixed(2) })}>Übernehmen</button>}
+          </p>
+        )}
         <label className="wide">Bemerkung<textarea value={w.bemerkung} onChange={(e) => set({ bemerkung: e.target.value })} placeholder="z. B. bringt eigenes Körbchen mit, Abholung 9 Uhr" /></label>
         <p className="hint wide">{naechte(w) ? `${naechte(w)} Nächte` : "Tagesgast (gleicher Tag)"} · Am Abholtag ist das Zimmer wieder frei.</p>
         {fehler && <p className="notice bad wide" role="alert">{fehler}</p>}

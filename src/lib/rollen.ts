@@ -28,7 +28,7 @@ export const MODULE = {
   sitzungen_team: "Sitzungen Team",
   sitzungen_kader: "Sitzungen Kader",
   pension: "Hundepension",
-  pension_kasse: "Kassenbuch Pension",
+  pension_kasse: "Kassenbuch Pension und Hofladen",
   tagesplan: "Tagesplan Pension",
   fahrdienst: "Fahrdienst",
   fahrzeuge: "Fahrzeuge und Unterhalt",

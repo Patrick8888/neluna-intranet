@@ -1,5 +1,6 @@
 // Fachlogik des Ladenbuchs (Kasse, Wochenbericht, CSV). Unabhängig von Firebase, damit sie testbar bleibt.
 import { datum, plusTage, r2, zahl } from "./format";
+import { MWST, mwstAufteilen } from "./pension";
 
 export type Standort = "laden" | "pension";
 
@@ -24,6 +25,13 @@ export type Kasse = {
   wechselgeldNeu: number;
   abgeholt: boolean;
   abgeholtAm: string;
+  /** Nur Pension: Hofladen-Verkäufe im Total und Umsatz/MWST je Satz (alles inkl. MWST). */
+  hofFutter?: number;
+  hofZubehoer?: number;
+  umsatz81?: number;
+  umsatz26?: number;
+  mwst81?: number;
+  mwst26?: number;
 };
 
 export type Uebergabe = {
@@ -161,20 +169,24 @@ export function wochenzahlen(
 }
 
 /** Monats-CSV für die Treuhand (Semikolon, Excel-tauglich mit BOM). */
-export function kasseCsv(zeilen: Kasse[]): string {
+export function kasseCsv(zeilen: Kasse[], mitMwst = false): string {
   const kopf = ["Datum", "Erfasst von", "Wechselgeld Anfang", "Bar", "Karte", "TWINT", "Total", "Bar-Ausgaben", "Soll-Bargeld", "Gezählt", "Differenz", "Safebag CHF", "Safebag-Nr", "Abgeholt Loomis", "Bemerkung"];
+  if (mitMwst) kopf.push("Pension", "Hofladen Futtermittel", "Hofladen Zubehör", `Umsatz ${MWST.normal} %`, `MWST ${MWST.normal} %`, `Umsatz ${MWST.reduziert} %`, `MWST ${MWST.reduziert} %`);
   const q = (x: unknown) => {
     const s = String(x ?? "");
     return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
   const n = (x: unknown) => (Number(x) || 0).toFixed(2);
   const sortiert = [...zeilen].sort((a, b) => a.datum.localeCompare(b.datum));
-  const zeilenText = sortiert.map((r) =>
-    [datum(r.datum), r.person, n(r.anfang), n(r.bar), n(r.karte), n(r.twint), n(r.total), n(r.ausgaben), n(r.soll), n(r.gezaehlt), n(r.differenz), n(r.safebagBetrag), r.safebagNr, r.abgeholt ? datum(r.abgeholtAm) : "", r.notiz]
-      .map(q)
-      .join(";"),
-  );
-  return "﻿" + [kopf.join(";"), ...zeilenText].join("\r\n");
+  const zeilenText = sortiert.map((r) => {
+    const felder: unknown[] = [datum(r.datum), r.person, n(r.anfang), n(r.bar), n(r.karte), n(r.twint), n(r.total), n(r.ausgaben), n(r.soll), n(r.gezaehlt), n(r.differenz), n(r.safebagBetrag), r.safebagNr, r.abgeholt ? datum(r.abgeholtAm) : "", r.notiz];
+    if (mitMwst) {
+      const m = mwstAufteilen(r.total, r.hofFutter ?? 0, r.hofZubehoer ?? 0);
+      felder.push(n(m.pension), n(r.hofFutter), n(r.hofZubehoer), n(m.umsatz81), n(m.mwst81), n(m.umsatz26), n(m.mwst26));
+    }
+    return felder.map(q).join(";");
+  });
+  return "\uFEFF" + [kopf.join(";"), ...zeilenText].join("\r\n");
 }
 
 /** Wochenbericht als Text zum Weiterleiten (WhatsApp, E-Mail). */

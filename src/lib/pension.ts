@@ -294,13 +294,17 @@ export function abrechnungTage(buchungen: Buchung[], kunden: Kunde[], monat: str
 }
 
 /** CSV der Abrechnung (Semikolon, Excel-tauglich mit BOM). */
-export function abrechnungCsv(zeilen: AbrechnungZeile[]): string {
+export function abrechnungCsv(zeilen: AbrechnungZeile[], p: Preise): string {
   const q = (x: unknown) => {
     const s = String(x ?? "");
     return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
-  const kopf = ["Kundin / Kunde", "Hund", "Ferien: Nächte", "Ferien: Tage", "Tagesbetreuung: Tage", "Aufenthalte"];
-  return "\uFEFF" + [kopf.join(";"), ...zeilen.map((z) => [z.kunde, z.hund, z.naechte, z.tage, z.tagesbetreuung, z.aufenthalte].map(q).join(";"))].join("\r\n");
+  const kopf = ["Kundin / Kunde", "Hund", "Ferien: Nächte", "Ferien: Tage", "Tagesbetreuung: Tage", "Aufenthalte", "Betrag CHF", `davon MWST ${MWST.normal} %`];
+  const zeile = (z: AbrechnungZeile) => {
+    const betrag = abrechnungBetrag(z, p);
+    return [z.kunde, z.hund, z.naechte, z.tage, z.tagesbetreuung, z.aufenthalte, betrag.toFixed(2), mwstAnteil(betrag, MWST.normal).toFixed(2)];
+  };
+  return "\uFEFF" + [kopf.join(";"), ...zeilen.map((z) => zeile(z).map(q).join(";"))].join("\r\n");
 }
 
 /** Die Hunde des Teams, die im Intranet als eigene Kartei-Einträge geführt werden. */
@@ -308,3 +312,44 @@ export const TEAMHUNDE: { kunde: string; hunde: string[] }[] = [
   { kunde: "Cristina de Oliveira (Team)", hunde: ["Buffy", "Yasha", "Lou"] },
   { kunde: "Patrick und Nalan Schaub (Team)", hunde: ["Escobar", "Benji", "Peppy", "Mäxi", "Lina"] },
 ];
+
+/** MWST-Sätze in Prozent: Pension, Zubehör und Spielzeug zum Normalsatz, Futtermittel zum reduzierten Satz. */
+export const MWST = { normal: 8.1, reduziert: 2.6 } as const;
+
+/** MWST-Anteil eines Betrags inklusive MWST. */
+export const mwstAnteil = (inkl: number, satz: number) => r2((inkl * satz) / (100 + satz));
+
+/**
+ * Tagesumsatz nach MWST-Satz: Hofladen-Futter zum reduzierten Satz, Hofladen-Zubehör und der Rest (Pension) zum Normalsatz.
+ * Alle Beträge inklusive MWST.
+ */
+export function mwstAufteilen(total: number, hofFutter: number, hofZubehoer: number) {
+  const pension = r2(total - hofFutter - hofZubehoer);
+  const umsatz81 = r2(pension + hofZubehoer);
+  const umsatz26 = r2(hofFutter);
+  return { pension, umsatz81, umsatz26, mwst81: mwstAnteil(umsatz81, MWST.normal), mwst26: mwstAnteil(umsatz26, MWST.reduziert) };
+}
+
+export type Preise = { tagesbetreuung: number; uebernachtung: number };
+
+/** Preise pro Hund (CHF inkl. MWST, Entscheid 18.10.2026); die Leitung kann sie im Intranet ändern. */
+export const STANDARD_PREISE: Preise = { tagesbetreuung: 65, uebernachtung: 20 };
+
+/** Gespeicherte Preise lesen; fehlende oder ungültige Werte durch die Standardpreise ersetzen. */
+export function preiseAus(x: Partial<Record<keyof Preise, unknown>> | undefined): Preise {
+  const n = (v: unknown, std: number) => (typeof v === "number" && v >= 0 ? v : std);
+  return { tagesbetreuung: n(x?.tagesbetreuung, STANDARD_PREISE.tagesbetreuung), uebernachtung: n(x?.uebernachtung, STANDARD_PREISE.uebernachtung) };
+}
+
+/**
+ * Preis eines Aufenthalts pro Hund: jeder anwesende Tag (Ankunfts- und Abholtag mitgezählt) als Tagesbetreuung,
+ * dazu jede Nacht als Übernachtung. Tagesgast: ein Tag.
+ */
+export function preisProHund(b: { von: string; bis: string }, p: Preise): number {
+  const n = naechte(b);
+  return r2((n + 1) * p.tagesbetreuung + n * p.uebernachtung);
+}
+
+/** Betrag einer Abrechnungszeile im Monat. */
+export const abrechnungBetrag = (z: Pick<AbrechnungZeile, "tage" | "naechte" | "tagesbetreuung">, p: Preise) =>
+  r2((z.tage + z.tagesbetreuung) * p.tagesbetreuung + z.naechte * p.uebernachtung);

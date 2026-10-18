@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
-  abrechnungTage, auslastung, klasseAusGewicht,
+  abrechnungBetrag, abrechnungCsv, abrechnungTage, auslastung, klasseAusGewicht, mwstAufteilen, preiseAus, preisProHund, STANDARD_PREISE,
   aufgabenFuer, bargeldSumme, belegteTage, belegungPruefen, impfWarnungen, istDa, kassenVorschlag, naechte, zimmerListe,
   STANDARD_ZIMMER, type Buchung, type Hund,
 } from "./pension";
@@ -150,5 +150,28 @@ describe("Abrechnung", () => {
     const kunden = [{ id: "team", name: "Team", telefon: "", email: "", adresse: "", notfallkontakt: "", tierarzt: "", notiz: "", team: true }];
     expect(abrechnungTage(b, kunden, "2026-10")).toEqual([{ kunde: "Meier", hund: "rex", naechte: 2, tage: 2, tagesbetreuung: 1, aufenthalte: 2 }]);
     expect(abrechnungTage(b, kunden, "2026-11")).toEqual([{ kunde: "Meier", hund: "rex", naechte: 1, tage: 2, tagesbetreuung: 0, aufenthalte: 1 }]);
+  });
+});
+
+describe("Preise und MWST", () => {
+  it("Ferien: jeder Tag Tagesbetreuung plus jede Nacht; Tagesgast ein Tag", () => {
+    expect(preisProHund({ von: "2026-10-23", bis: "2026-10-25" }, STANDARD_PREISE)).toBe(235);
+    expect(preisProHund({ von: "2026-10-23", bis: "2026-10-23" }, STANDARD_PREISE)).toBe(65);
+    expect(abrechnungBetrag({ tage: 3, naechte: 2, tagesbetreuung: 1 }, STANDARD_PREISE)).toBe(300);
+  });
+
+  it("CSV mit Betrag und MWST-Anteil", () => {
+    const csv = abrechnungCsv([{ kunde: "Meier", hund: "Rex", naechte: 2, tage: 3, tagesbetreuung: 0, aufenthalte: 1 }], STANDARD_PREISE);
+    expect(csv.split("\r\n")[1]).toBe("Meier;Rex;2;3;0;1;235.00;17.61");
+  });
+
+  it("gespeicherte Preise, fehlende Werte aus dem Standard", () => {
+    expect(preiseAus(undefined)).toEqual(STANDARD_PREISE);
+    expect(preiseAus({ tagesbetreuung: 70, uebernachtung: "x" })).toEqual({ tagesbetreuung: 70, uebernachtung: 20 });
+  });
+
+  it("Tagesumsatz nach Satz: Hofladen-Futter 2.6 %, Zubehör und Pension 8.1 %", () => {
+    expect(mwstAufteilen(500, 102.6, 50)).toEqual({ pension: 347.4, umsatz81: 397.4, umsatz26: 102.6, mwst81: 29.78, mwst26: 2.6 });
+    expect(mwstAufteilen(108.1, 0, 0)).toMatchObject({ umsatz81: 108.1, mwst81: 8.1, mwst26: 0 });
   });
 });
