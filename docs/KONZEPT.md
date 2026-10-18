@@ -62,7 +62,7 @@ Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pensio
 - **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Abholung, Baden), Preis, Bemerkungen.
 - **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends, Medikamente, Spaziergang, Auffälligkeiten). Wer hat es wann erledigt.
 - **Tagesbericht / Übergabe Pension:** wie beim Laden, Pendenzen für die nächste Schicht.
-- **Kassenbuch Pension:** eigenes Kassenbuch für die Pension in Willisdorf, getrennt vom Laden, aber gleich aufgebaut wie das Ladenbuch: Tagesabschluss mit Bar, Karte und TWINT, Bar-Ausgaben, gezähltes Bargeld, Differenz, Wechselgeld, Safebag/Einzahlung und CSV-Export. Zahlungen beim Check-out können direkt aus der Buchung übernommen werden (Hund, Halter/in, Betrag, Zahlungsart); bezahlte Rechnungen (Überweisung) werden separat erfasst und laufen nicht durch die Kasse. Auswertungen für die Geschäftsführung zeigen Laden und Pension getrennt und zusammen.
+- **Kassenbuch Pension:** eigenes Kassenbuch für die Pension in Willisdorf, getrennt vom Laden, aber gleich aufgebaut wie das Ladenbuch: Tagesabschluss mit Bar, Karte und TWINT, Bar-Ausgaben, gezähltes Bargeld, Differenz, Wechselgeld, Safebag/Einzahlung und CSV-Export. Zahlungen beim Check-out können direkt aus der Buchung übernommen werden (Hund, Halter/in, Betrag, Zahlungsart); bezahlte Rechnungen (Überweisung) werden separat erfasst und laufen nicht durch die Kasse. Auswertungen für die Geschäftsführung zeigen Laden und Pension getrennt und zusammen. Der tägliche Kassenabschluss wird in der Pension neu eingeführt (Entscheid 18.10.2026); das Intranet führt deshalb Schritt für Schritt durch den Abschluss und erinnert am Abend, wenn er fehlt.
 
 ### 3.4 Fahrdienstplan
 Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Abholung/Rückbringung» erzeugt oder von Hand erfasst. Pro Fahrt: Datum, Zeitfenster, Adresse, Hund(e), Fahrer/in, Fahrzeug, Status. Tagesansicht als Route für den/die Fahrer/in mit Adresse zum Antippen (Karten-App) und Telefonnummer der Halter/in.
@@ -181,6 +181,7 @@ Geklärt (18.10.2026):
 - **Firebase-Projekt:** Patrick legt ein neues Google-Konto für NeLuna an und darin das Projekt `neluna-intranet`.
 - **Hunde pro Zimmer:** entscheidet das Team selbst. Im Intranet ist die Anzahl pro Zimmer einstellbar (Standard 1, Hunde derselben Familie dürfen zusammen).
 - **Fahrdienst:** Laura Essinger und Nic Richter fahren, Patrick Schaub ist Backup.
+- **Kassenbuch Pension:** wird neu eingeführt, mit täglichem Kassenabschluss wie im Laden.
 
 Noch offen:
 1. **Bestehende Daten der Pension:** Buchungsdaten (Software, Excel) liefert Patrick nach; blockiert den Start nicht.
