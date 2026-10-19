@@ -84,6 +84,15 @@ describe("Kartei", () => {
     await assertSucceeds(updateDoc(doc(als("sina"), "pension_kunden/k1"), { versicherung: "Mobiliar" }));
   });
 
+  it("Stammblatt: Name/Vorname, PLZ/Ort, Tierarzt und Sozialverhalten", async () => {
+    const k = { ...kunde("sina"), nachname: "Meier", vorname: "Anna", adresse: "Dorfstrasse 1", plzOrt: "8253 Willisdorf", geburtsdatum: "1980-04-12", notfallkontakt2: "Hans Meier 079 111 11 11" };
+    await assertSucceeds(setDoc(doc(als("sina"), "pension_kunden/k1"), k));
+    await assertFails(setDoc(doc(als("sina"), "pension_kunden/k2"), { ...k, geburtsdatum: "12.4.1980" }));
+    await assertSucceeds(updateDoc(doc(als("sina"), "pension_kunden/k1"), { plzOrt: "8200 Schaffhausen", geburtsdatum: "" }));
+    await assertSucceeds(setDoc(doc(als("sina"), "pension_hunde/h1"), hund("sina", { tierarzt: "Tierarztpraxis Stein", tierarztTelefon: "052 741 00 00", gesundheit: "Arthrose", sozialverhalten: "mit Hündinnen gut" })));
+    await assertFails(setDoc(doc(als("sina"), "pension_hunde/h2"), hund("sina", { gesundheit: "x".repeat(2001) })));
+  });
+
   it("Änderungen behalten, wer den Eintrag erfasst hat", async () => {
     await setDoc(doc(als("sina"), "pension_hunde/h1"), hund("sina"));
     await assertSucceeds(updateDoc(doc(als("cristina"), "pension_hunde/h1"), { vertraeglich: false, medikamente: "Apoquel" }));

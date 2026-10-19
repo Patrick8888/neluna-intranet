@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { sendPasswordResetEmail, signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "../firebase";
 import { meldung } from "../lib/fehler";
+import { Logos } from "./Logos";
 
 export function Login() {
   const [email, setEmail] = useState("");
@@ -40,7 +41,7 @@ export function Login() {
 
   return (
     <div className="wrap login">
-      <img className="logo" src="/logo.webp" alt="NeLuna's Pfötli Shop" width={640} height={401} />
+      <Logos />
       <main>
         <div style={{ textAlign: "center" }}>
           <div className="eyebrow">Hundepension · Pfötli Shop</div>

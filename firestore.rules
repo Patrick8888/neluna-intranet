@@ -311,7 +311,9 @@ service cloud.firestore {
     match /pension_kunden/{id} {
       function gueltigerKunde(d) {
         return d.keys().hasOnly(['name', 'telefon', 'telefon2', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'versicherung', 'team', 'notiz',
-            'erstellt', 'person', 'uid'])
+            'nachname', 'vorname', 'plzOrt', 'geburtsdatum', 'notfallkontakt2', 'erstellt', 'person', 'uid'])
+          && text(d, 'nachname', 80) && text(d, 'vorname', 80) && text(d, 'plzOrt', 100) && text(d, 'notfallkontakt2', 200)
+          && (!('geburtsdatum' in d) || d.geburtsdatum == '' || datumOk(d, 'geburtsdatum'))
           && (!('team' in d) || d.team is bool)
           && text(d, 'telefon2', 40) && text(d, 'versicherung', 200)
           && d.name is string && d.name.size() > 0 && d.name.size() <= 120
@@ -321,7 +323,8 @@ service cloud.firestore {
       allow read: if pensionLesen();
       allow create: if pensionBearbeiten() && vonMir() && gueltigerKunde(request.resource.data);
       allow update: if pensionBearbeiten() && gueltigerKunde(request.resource.data)
-        && nurFelder(['name', 'telefon', 'telefon2', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'versicherung', 'team', 'notiz']);
+        && nurFelder(['name', 'telefon', 'telefon2', 'email', 'adresse', 'notfallkontakt', 'tierarzt', 'versicherung', 'team', 'notiz',
+          'nachname', 'vorname', 'plzOrt', 'geburtsdatum', 'notfallkontakt2']);
       allow delete: if pensionVerwalten();
     }
 
@@ -330,7 +333,8 @@ service cloud.firestore {
         return d.keys().hasOnly(['kundeId', 'name', 'rasse', 'geburtsdatum', 'geschlecht', 'kastriert', 'futter', 'menge', 'medikamente',
             'allergien', 'verhalten', 'vertraeglich', 'notiz', 'impfungen', 'erstellt', 'person', 'uid',
             'gewicht', 'gewichtsklasse', 'chipnummer', 'farbe', 'fuetterungszeiten', 'leckerli', 'schlafplatz', 'kommandos',
-            'aengste', 'spielverhalten', 'freilauf', 'laeufigkeit'])
+            'aengste', 'spielverhalten', 'freilauf', 'laeufigkeit', 'tierarzt', 'tierarztTelefon', 'gesundheit', 'sozialverhalten'])
+          && text(d, 'tierarzt', 200) && text(d, 'tierarztTelefon', 40) && text(d, 'gesundheit', 2000) && text(d, 'sozialverhalten', 2000)
           && (!('gewichtsklasse' in d) || d.gewichtsklasse in ['', 'klein', 'mittel', 'gross'])
           && text(d, 'gewicht', 20) && text(d, 'chipnummer', 40) && text(d, 'farbe', 100) && text(d, 'fuetterungszeiten', 500)
           && text(d, 'leckerli', 500) && text(d, 'schlafplatz', 500) && text(d, 'kommandos', 1000) && text(d, 'aengste', 1000)

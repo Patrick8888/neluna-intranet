@@ -3,6 +3,7 @@ import {
   abrechnungBetrag, abrechnungCsv, abrechnungTage, auslastung, klasseAusGewicht, mwstAufteilen, preiseAus, preisProHund, STANDARD_PREISE,
   aufenthaltVon, aufgabenFuer, bargeldSumme, zimmerAm, belegteTage, belegungPruefen, impfWarnungen, istDa, kassenVorschlag, naechte, zimmerListe,
   STANDARD_ZIMMER, type Buchung, type Hund,
+  kundenName, volleAdresse,
 } from "./pension";
 
 const hund = (id: string, w: Partial<Hund> = {}): Hund => ({
@@ -190,5 +191,14 @@ describe("Preise und MWST", () => {
   it("Tagesumsatz nach Satz: Hofladen-Futter 2.6 %, Zubehör und Pension 8.1 %", () => {
     expect(mwstAufteilen(500, 102.6, 50)).toEqual({ pension: 347.4, umsatz81: 397.4, umsatz26: 102.6, mwst81: 29.78, mwst26: 2.6 });
     expect(mwstAufteilen(108.1, 0, 0)).toMatchObject({ umsatz81: 108.1, mwst81: 8.1, mwst26: 0 });
+  });
+});
+
+describe("Kundendaten", () => {
+  it("Name aus Name und Vorname, Adresse mit PLZ/Ort", () => {
+    expect(kundenName(" Meier ", "Anna")).toBe("Meier Anna");
+    expect(kundenName("Meier", "")).toBe("Meier");
+    expect(volleAdresse({ adresse: "Dorfstrasse 1", plzOrt: "8253 Willisdorf" })).toBe("Dorfstrasse 1, 8253 Willisdorf");
+    expect(volleAdresse({ adresse: "Dorfstrasse 1, 8253 Willisdorf" })).toBe("Dorfstrasse 1, 8253 Willisdorf");
   });
 });
