@@ -13,6 +13,7 @@ import { useKommunikation } from "../chat/daten";
 import { useToast } from "../ui";
 import { DIENST_BEREICHE } from "../lib/personal";
 import { AufgabeZeile } from "../aufgaben/Aufgaben";
+import { Stempeluhr } from "../personal/Zeiterfassung";
 import { useDiensteHeute, useMeineAufgaben, useOffeneAntraege } from "./arbeit";
 
 /** Abends erinnern, wenn der Kassenabschluss der Pension fehlt (er ist dort neu). */
@@ -110,10 +111,12 @@ function Arbeit() {
   const aufgaben = useMeineAufgaben();
   const antraege = useOffeneAntraege();
   const { zeigen, element } = useToast();
-  if (!dienste.length && !aufgaben.length && !antraege.length) return null;
+  const ich = useIch();
+  if (!darf(ich.rollen, "zeiterfassung", STUFE.bearbeiten) && !dienste.length && !aufgaben.length && !antraege.length) return null;
   return (
     <section className="panel" aria-labelledby="h-arbeit">
       <h2 id="h-arbeit">Dein Tag</h2>
+      <Stempeluhr />
       {dienste.length > 0 && (
         <p className="notice good">
           Dienst heute: {dienste.map((d) => `${d.von}–${d.bis} ${DIENST_BEREICHE[d.bereich]}${d.notiz ? ` (${d.notiz})` : ""}`).join(", ")}

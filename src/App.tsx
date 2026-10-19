@@ -19,6 +19,8 @@ import { Heute } from "./pension/Heute";
 import { Kartei } from "./pension/Kartei";
 import { Abrechnung } from "./pension/Abrechnung";
 import { Stammblatt } from "./pension/Stammblatt";
+import { HundSeite } from "./pension/HundSeite";
+import { Zimmer } from "./pension/Zimmer";
 import { PensionKasse } from "./pension/Kasse";
 import { Pension } from "./pension/Pension";
 import { Tagesplan } from "./pension/Tagesplan";
@@ -33,6 +35,7 @@ import { Mitteilungen } from "./chat/Mitteilungen";
 import { Personal } from "./personal/Personal";
 import { Dienstplan } from "./personal/Dienstplan";
 import { Abwesenheiten } from "./personal/Abwesenheiten";
+import { Zeiterfassung } from "./personal/Zeiterfassung";
 import { Aufgaben } from "./aufgaben/Aufgaben";
 import { Dokumente } from "./dokumente/Dokumente";
 
@@ -79,6 +82,8 @@ function Inhalt() {
           <Route path="belegung" element={<Belegung />} />
           <Route path="kartei" element={<Kartei />} />
           <Route path="stammblatt/:kundeId" element={<Stammblatt />} />
+          <Route path="hund/:hundId" element={<HundSeite />} />
+          <Route path="zimmer" element={<Zimmer />} />
           <Route path="abrechnung" element={<Berechtigt modul="pension" mindestens={STUFE.bearbeiten}><Abrechnung /></Berechtigt>} />
           <Route path="tagesplan" element={<Berechtigt modul="tagesplan" mindestens={STUFE.bearbeiten}><Tagesplan /></Berechtigt>} />
           <Route path="uebergabe" element={<Berechtigt modul="pension" mindestens={STUFE.bearbeiten}><PensionUebergabe /></Berechtigt>} />
@@ -95,6 +100,7 @@ function Inhalt() {
           <Route index element={<Navigate to="dienstplan" replace />} />
           <Route path="dienstplan" element={<Dienstplan />} />
           <Route path="abwesenheiten" element={<Abwesenheiten />} />
+          <Route path="zeiterfassung" element={<Berechtigt modul="zeiterfassung" mindestens={STUFE.bearbeiten}><Zeiterfassung /></Berechtigt>} />
         </Route>
         <Route path="aufgaben" element={<Berechtigt modul="aufgaben"><Aufgaben /></Berechtigt>} />
         <Route path="dokumente" element={<Berechtigt modul="dokumente"><Dokumente /></Berechtigt>} />

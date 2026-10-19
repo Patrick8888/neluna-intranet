@@ -42,6 +42,7 @@ function Unternavigation() {
     <>
       <nav className="unternav" aria-label="Personal">
         <NavLink to="dienstplan" className="chip">Dienstplan</NavLink>
+        <NavLink to="zeiterfassung" className="chip">Zeiterfassung</NavLink>
         <NavLink to="abwesenheiten" className="chip">
           Ferien und Abwesenheiten
           {offen ? <span className="badge" aria-label={`${offen} offene Anträge`}>{offen}</span> : null}

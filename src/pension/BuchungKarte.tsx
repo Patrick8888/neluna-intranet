@@ -56,7 +56,7 @@ export function BuchungKarte({ b, zeigen }: { b: Buchung; zeigen: (t: string) =>
   return (
     <article className={`item${b.status === "Storniert" || b.status === "Abgeholt" ? " done" : ""}`}>
       <div className="item-row">
-        <strong>{b.hunde.map((h) => h.name).join(", ")}</strong>
+        <strong className="hundeliste-name">{b.hunde.map((h, i) => <span key={h.id}>{i > 0 && ", "}<Link to={`/pension/hund/${h.id}`}>{h.name}</Link></span>)}</strong>
         <span className={`pill ${statusFarbe[b.status]}`}>{b.status}</span>
       </div>
       <div className="meta">

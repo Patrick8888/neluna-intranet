@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   abrechnungBetrag, abrechnungCsv, abrechnungTage, auslastung, klasseAusGewicht, mwstAufteilen, preiseAus, preisProHund, STANDARD_PREISE,
-  aufgabenFuer, bargeldSumme, belegteTage, belegungPruefen, impfWarnungen, istDa, kassenVorschlag, naechte, zimmerListe,
+  aufenthaltVon, aufgabenFuer, bargeldSumme, zimmerAm, belegteTage, belegungPruefen, impfWarnungen, istDa, kassenVorschlag, naechte, zimmerListe,
   STANDARD_ZIMMER, type Buchung, type Hund,
 } from "./pension";
 
@@ -95,6 +95,23 @@ describe("Hunde", () => {
   it("Medikamente erscheinen nur, wenn welche erfasst sind", () => {
     expect(aufgabenFuer({ medikamente: "" }).map(([k]) => k)).not.toContain("medikament");
     expect(aufgabenFuer({ medikamente: "Apoquel 1×" }).map(([k]) => k)).toContain("medikament");
+  });
+
+  it("keine Spaziergänge auf der Abhakliste", () => {
+    expect(aufgabenFuer({ medikamente: "" }).map(([, t]) => t)).toEqual(["Füttern morgens", "Füttern abends"]);
+  });
+
+  it("Zimmer am Tag: wer ist wo, ohne Anfragen und Stornos", () => {
+    const b = [
+      buchung("b1", { zimmerId: "zimmer-2", hunde: [{ id: "rex", name: "rex" }], von: "2026-10-18", bis: "2026-10-20", status: "Eingecheckt" }),
+      buchung("b2", { zimmerId: "zimmer-2", hunde: [{ id: "luna", name: "luna" }], von: "2026-10-20", bis: "2026-10-22", status: "Anfrage" }),
+      buchung("b3", { zimmerId: "zimmer-1", hunde: [{ id: "weg", name: "Weg" }], von: "2026-10-19", bis: "2026-10-21" }),
+    ];
+    const r = zimmerAm({ zimmer, buchungen: b, hunde }, "2026-10-20");
+    expect(r.find((x) => x.zimmer.id === "zimmer-2")?.gaeste.map((g) => g.hund.id)).toEqual(["rex"]);
+    expect(r.find((x) => x.zimmer.id === "zimmer-1")?.gaeste.map((g) => g.hund.name)).toEqual(["Weg"]);
+    expect(aufenthaltVon(b, "rex", "2026-10-19")?.id).toBe("b1");
+    expect(aufenthaltVon(b, "rex", "2026-10-21")).toBeUndefined();
   });
 });
 

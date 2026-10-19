@@ -2,7 +2,7 @@
 import { Link } from "react-router";
 import { useIch } from "../auth";
 import { heute, plusTage, stunde } from "../lib/format";
-import { belegteTage, istDa } from "../lib/pension";
+import { belegteTage, istDa, zimmerAm } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { useToast } from "../ui";
 import { BuchungKarte } from "./BuchungKarte";
@@ -52,6 +52,24 @@ export function Heute() {
           <div><span>Freie Plätze heute Nacht</span><b>{Math.max(0, plaetze - belegtHeute)} von {plaetze}</b></div>
         </div>
       </section>
+      {hundeHeute > 0 && (
+        <section className="panel" aria-labelledby="h-wo">
+          <div className="panel-head">
+            <h2 id="h-wo">Wer ist in welchem Zimmer?</h2>
+            <Link className="btn ghost small" to="/pension/zimmer">Zimmer mit Futter und Medikamenten</Link>
+          </div>
+          <div className="list">
+            {zimmerAm(d, tag).filter((r) => r.gaeste.length).map((r) => (
+              <div key={r.zimmer.id} className="meta">
+                <b>{r.zimmer.name}</b>
+                {r.gaeste.map((g) => (
+                  <Link key={g.hund.id} to={`/pension/hund/${g.hund.id}`} className={`pill${g.hund.medikamente ? " bad" : ""}`}>{g.hund.name}{g.hund.medikamente ? " · Medikamente" : ""}</Link>
+                ))}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
       {liste("Ankünfte heute", ankuenfte, "Heute kommt kein Hund an.")}
       {liste("Abholungen heute", abholungen, "Heute wird kein Hund abgeholt.")}
       {liste("Im Haus", imHaus, "Sonst ist kein Hund eingecheckt.")}

@@ -93,10 +93,13 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
   // Die ID steht schon vor dem Speichern fest, damit sich eine neue Buchung nicht selbst als Belegung meldet.
   const [id] = useState(() => vorhanden?.id ?? doc(collection(db, "pension_buchungen")).id);
   const set = (x: Partial<Werte>) => setW((alt) => ({ ...alt, ...x }));
-  const kunden = [...d.kunden].sort((a, b) => a.name.localeCompare(b.name, "de"));
+  // Gebucht wird über den Hund; die Halterin oder der Halter ergibt sich daraus.
+  const hundeAuswahl = d.hunde
+    .map((h) => ({ h, k: d.kunden.find((k) => k.id === h.kundeId) }))
+    .sort((a, b) => a.h.name.localeCompare(b.h.name, "de") || (a.k?.name ?? "").localeCompare(b.k?.name ?? "", "de"));
   const hundeDesKunden = d.hunde.filter((h) => h.kundeId === w.kundeId);
   const pruefen = (zimmerId: string) => belegungPruefen(d, { id, zimmerId, von: w.von, bis: w.bis, hundIds: w.hundIds });
-  const fehler = w.status === "Storniert" ? null : !w.kundeId ? "Bitte eine Kundin oder einen Kunden wählen." : !w.zimmerId ? "Bitte ein Zimmer wählen." : pruefen(w.zimmerId);
+  const fehler = w.status === "Storniert" ? null : !w.kundeId || !w.hundIds.length ? "Bitte einen Hund wählen." : !w.zimmerId ? "Bitte ein Zimmer wählen." : pruefen(w.zimmerId);
   const preisVorschlag = w.hundIds.length * preisProHund(w, d.preise);
   const warnungen = w.hundIds.flatMap((id) => {
     const h = d.hunde.find((x) => x.id === id);
@@ -129,15 +132,18 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
       </div>
       <form className="grid" onSubmit={absenden}>
         <label className="wide">
-          Kundin / Kunde
-          <select value={w.kundeId} onChange={(e) => set({ kundeId: e.target.value, hundIds: d.hunde.filter((h) => h.kundeId === e.target.value).map((h) => h.id).slice(0, 1) })} required>
+          Hund
+          <select value={w.hundIds[0] ?? ""} onChange={(e) => {
+            const h = d.hunde.find((x) => x.id === e.target.value);
+            set({ kundeId: h?.kundeId ?? "", hundIds: h ? [h.id] : [] });
+          }} required>
             <option value="">– wählen –</option>
-            {kunden.map((k) => <option key={k.id} value={k.id}>{k.name}</option>)}
+            {hundeAuswahl.map(({ h, k }) => <option key={h.id} value={h.id}>{h.name}{h.rasse ? ` (${h.rasse})` : ""} · {k?.name ?? "ohne Halter/in"}</option>)}
           </select>
         </label>
-        {w.kundeId && (
+        {w.kundeId && hundeDesKunden.length > 1 && (
           <fieldset className="wide">
-            <legend>Hunde</legend>
+            <legend>Hunde von {d.kunden.find((k) => k.id === w.kundeId)?.name}</legend>
             {hundeDesKunden.length ? (
               <div className="checks">
                 {hundeDesKunden.map((h) => (
@@ -150,7 +156,7 @@ function Formular({ vorhanden, fertig, zeigen }: { vorhanden?: Buchung; fertig: 
             ) : <p className="hint">Für diese Person ist noch kein Hund erfasst. <Link to={`/pension/kartei?kunde=${w.kundeId}`}>In der Kartei erfassen</Link></p>}
           </fieldset>
         )}
-        {!kunden.length && <p className="hint wide">Noch keine Kundschaft erfasst. <Link to="/pension/kartei">Zuerst in der Kartei anlegen</Link></p>}
+        {!d.hunde.length && <p className="hint wide">Noch kein Hund erfasst. <Link to="/pension/kartei">Zuerst in der Kartei anlegen</Link></p>}
         <label>Ankunft<input type="date" value={w.von} onChange={(e) => set({ von: e.target.value, bis: w.bis < e.target.value ? e.target.value : w.bis })} required /></label>
         <label>Abholung<input type="date" value={w.bis} min={w.von} onChange={(e) => set({ bis: e.target.value })} required /></label>
         <label>

@@ -1,5 +1,6 @@
-// Tagesplan: pro Hund im Haus füttern, Spaziergänge und Medikamente abhaken. Wer hat es wann erledigt.
+// Tagesplan: pro Hund im Haus Füttern und Medikamente abhaken. Wer hat es wann erledigt.
 import { useEffect, useState } from "react";
+import { Link } from "react-router";
 import { deleteField, doc, FieldPath, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useIch } from "../auth";
@@ -85,7 +86,7 @@ export function Tagesplan() {
         return (
           <section key={`${b.id}-${hund.id}`} className="panel">
             <div className="panel-head">
-              <h2>{hund.name}</h2>
+              <h2><Link to={`/pension/hund/${hund.id}`}>{hund.name}</Link></h2>
               <div className="meta">
                 <span className="pill acc">{zimmer?.name}</span>
                 {b.von === tag && <span className="pill good">Ankunft</span>}
@@ -93,7 +94,7 @@ export function Tagesplan() {
               </div>
             </div>
             <div className="meta">
-              {hund.futter && <span>Futter: {hund.futter}{hund.menge ? ` · ${hund.menge}` : ""}</span>}
+              <span>Futter: {[hund.futter, hund.menge, hund.fuetterungszeiten].filter(Boolean).join(" · ") || "nicht erfasst"}</span>
               {hund.allergien && <span className="pill bad">Allergie: {hund.allergien}</span>}
               {!hund.vertraeglich && <span className="pill bad">nicht verträglich</span>}
             </div>

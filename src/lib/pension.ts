@@ -221,12 +221,10 @@ export function impfWarnungen(hund: Hund, bis: string, heute: string): string[] 
     .map((i) => `${hund.name}: ${i.art} ${i.gueltigBis < heute ? "abgelaufen am" : "läuft ab am"} ${datum(i.gueltigBis)}`);
 }
 
+// Spaziergänge stehen bewusst nicht auf der Liste (Entscheid 19.10.2026).
 export const TAGES_AUFGABEN = [
   ["fuettern_morgen", "Füttern morgens"],
-  ["gassi_morgen", "Spaziergang morgens"],
-  ["gassi_mittag", "Spaziergang mittags"],
   ["fuettern_abend", "Füttern abends"],
-  ["gassi_abend", "Spaziergang abends"],
 ] as const;
 
 /** Abhakliste eines Hundes für einen Tag; Medikamente nur, wenn welche erfasst sind. */
@@ -353,3 +351,27 @@ export function preisProHund(b: { von: string; bis: string }, p: Preise): number
 /** Betrag einer Abrechnungszeile im Monat. */
 export const abrechnungBetrag = (z: Pick<AbrechnungZeile, "tage" | "naechte" | "tagesbetreuung">, p: Preise) =>
   r2((z.tage + z.tagesbetreuung) * p.tagesbetreuung + z.naechte * p.uebernachtung);
+
+export type Gast = { buchung: Buchung; hund: Hund };
+
+/** Wer an einem Tag in welchem Zimmer ist (Ankunfts- und Abholtag zählen mit). */
+export function zimmerAm(d: { zimmer: Zimmer[]; buchungen: Buchung[]; hunde: Hund[] }, tag: string): { zimmer: Zimmer; gaeste: Gast[] }[] {
+  const gaeste = d.buchungen.filter((b) => istDa(b, tag)).flatMap((b) =>
+    b.hunde.map((x) => ({ buchung: b, hund: d.hunde.find((h) => h.id === x.id) ?? ({ ...leererHundFuer(x.name), id: x.id, kundeId: b.kundeId } as Hund) })),
+  );
+  const belegt = new Set(gaeste.map((g) => g.buchung.zimmerId));
+  return d.zimmer
+    .filter((z) => z.aktiv || belegt.has(z.id))
+    .map((z) => ({ zimmer: z, gaeste: gaeste.filter((g) => g.buchung.zimmerId === z.id).sort((a, b) => a.hund.name.localeCompare(b.hund.name, "de")) }));
+}
+
+function leererHundFuer(name: string): Omit<Hund, "id" | "kundeId"> {
+  return { name, rasse: "", geburtsdatum: "", geschlecht: "", kastriert: false, futter: "", menge: "", medikamente: "", allergien: "", verhalten: "", vertraeglich: true, notiz: "", impfungen: [] };
+}
+
+/** Aktueller oder nächster Aufenthalt eines Hundes. */
+export function aufenthaltVon(buchungen: Buchung[], hundId: string, tag: string): Buchung | undefined {
+  return buchungen
+    .filter((b) => b.hunde.some((h) => h.id === hundId) && b.bis >= tag && b.status !== "Storniert" && b.status !== "Abgeholt")
+    .sort((a, b) => a.von.localeCompare(b.von))[0];
+}
