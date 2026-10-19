@@ -54,7 +54,8 @@ export function PushEinstellungenPanel() {
   const [e, setE] = useState<PushEinstellungen>({});
   useEffect(() => onSnapshot(doc(db, "push_einstellungen", ich.uid), (s) => setE((s.data() as PushEinstellungen) ?? {}), () => {}), [ich.uid]);
   if (!darf(ich.rollen, "chat")) return null;
-  const arten = (Object.keys(PUSH_ARTEN) as PushArt[]).filter((a) => (a !== "fahrten" || darf(ich.rollen, "fahrdienst")) && (a !== "aufgaben" || darf(ich.rollen, "aufgaben", STUFE.bearbeiten)));
+  const arten = (Object.keys(PUSH_ARTEN) as PushArt[]).filter((a) => (a !== "fahrten" || darf(ich.rollen, "fahrdienst")) && (a !== "aufgaben" || darf(ich.rollen, "aufgaben", STUFE.bearbeiten))
+    && (a !== "erinnerungen" || darf(ich.rollen, "pension", STUFE.bearbeiten) || darf(ich.rollen, "fahrdienst", STUFE.bearbeiten)));
   return (
     <section className="panel" aria-labelledby="h-push">
       <h2 id="h-push">Push-Nachrichten</h2>

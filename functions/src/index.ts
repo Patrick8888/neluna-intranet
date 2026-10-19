@@ -1,13 +1,15 @@
 // Server-Funktionen: verschicken Push-Nachrichten, wenn im Chat geschrieben, eine Mitteilung veröffentlicht
-// eine Fahrt zugeteilt, verschoben oder abgesagt, Ferien beantragt oder entschieden oder eine Aufgabe zugeteilt wird. Wer was bekommt, steht in src/lib/push.ts.
+// eine Fahrt zugeteilt, verschoben oder abgesagt, Ferien beantragt oder entschieden oder eine Aufgabe zugeteilt wird,
+// dazu jeden Abend die Erinnerung für den nächsten Tag. Wer was bekommt, steht in src/lib/push.ts.
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions";
-import { heute } from "../../src/lib/format";
-import { abwesenheitPush, aufgabePush, chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt, type PushArt, type PushEinstellungen, type PushNachricht, type PushPerson } from "../../src/lib/push";
+import { heute, plusTage } from "../../src/lib/format";
+import { abwesenheitPush, aufgabePush, chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt, vortagPush, type PushArt, type PushEinstellungen, type PushNachricht, type PushPerson } from "../../src/lib/push";
 
 // Gleiche Region wie die Datenbank (Zürich); wenige Instanzen reichen für das Team.
 setGlobalOptions({ region: "europe-west6", maxInstances: 3 });
@@ -73,4 +75,18 @@ export const abwesenheitPushSenden = onDocumentWritten("abwesenheiten/{id}", asy
 export const aufgabePushSenden = onDocumentWritten("aufgaben/{id}", async (event) => {
   const m = aufgabePush(event.params.id, event.data?.before.data(), event.data?.after.data());
   if (m) await senden([m.uid], "aufgaben", m.nachricht);
+});
+
+/** Jeden Abend um 18 Uhr: was morgen in der Pension und im Fahrdienst ansteht. */
+export const vortagErinnerung = onSchedule({ schedule: "0 18 * * *", timeZone: "Europe/Zurich" }, async () => {
+  const morgen = plusTage(heute(), 1);
+  const [kommen, gehen, fahrten] = await Promise.all([
+    db.collection("pension_buchungen").where("von", "==", morgen).get(),
+    db.collection("pension_buchungen").where("bis", "==", morgen).get(),
+    db.collection("fahrten").where("datum", "==", morgen).get(),
+  ]);
+  const buchungen = [...kommen.docs, ...gehen.docs].map((d) => d.data());
+  const hundIds = [...new Set(kommen.docs.flatMap((d) => ((d.get("hunde") as { id: string }[]) ?? []).map((h) => h.id)))].filter(Boolean);
+  const hunde = hundIds.length ? (await db.getAll(...hundIds.map((id) => db.doc(`pension_hunde/${id}`)))).filter((d) => d.exists).map((d) => ({ id: d.id, name: String(d.get("name")), impfungen: d.get("impfungen") ?? [] })) : [];
+  for (const m of vortagPush(morgen, buchungen, hunde, fahrten.docs.map((d) => d.data()), await team())) await senden(m.uids, "erinnerungen", m.nachricht);
 });
