@@ -2,11 +2,14 @@ import { createContext, use, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import { namensTeile } from "./lib/format";
 import { istRolle, type Rolle } from "./lib/rollen";
 
 export type Benutzer = {
   uid: string;
   name: string;
+  vorname: string;
+  nachname: string;
   email: string;
   funktion: string | null;
   pensum: number | null;
@@ -19,6 +22,9 @@ export function alsBenutzer(uid: string, d: Record<string, unknown>): Benutzer {
   return {
     uid,
     name: String(d.name ?? ""),
+    ...(d.vorname != null || d.nachname != null
+      ? { vorname: String(d.vorname ?? ""), nachname: String(d.nachname ?? "") }
+      : namensTeile(String(d.name ?? ""))),
     email: String(d.email ?? ""),
     funktion: (d.funktion as string) ?? null,
     pensum: (d.pensum as number) ?? null,

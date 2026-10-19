@@ -100,6 +100,8 @@ describe("Benutzer", () => {
   it("man ändert bei sich Name und Telefon, aber nicht die eigenen Rollen", async () => {
     const db = als("rahel");
     await assertSucceeds(updateDoc(doc(db, "benutzer/rahel"), { name: "Rahel W.", telefon: "079 000 00 00" }));
+    await assertSucceeds(updateDoc(doc(db, "benutzer/rahel"), { name: "Rahel Winet", vorname: "Rahel", nachname: "Winet" }));
+    await assertFails(updateDoc(doc(db, "benutzer/rahel"), { vorname: "x".repeat(61) }));
     await assertFails(updateDoc(doc(db, "benutzer/rahel"), { rollen: ["verkauf", "admin"] }));
     await assertFails(updateDoc(doc(db, "benutzer/rahel"), { aktiv: true, pensum: 100 }));
   });
