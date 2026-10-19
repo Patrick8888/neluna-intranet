@@ -114,6 +114,12 @@ describe("Hunde", () => {
     expect(aufenthaltVon(b, "rex", "2026-10-19")?.id).toBe("b1");
     expect(aufenthaltVon(b, "rex", "2026-10-21")).toBeUndefined();
   });
+
+  it("ausgecheckt am Abholtag: Zimmer ist frei", () => {
+    const b = [buchung("b1", { zimmerId: "zimmer-2", hunde: [{ id: "rex", name: "rex" }], von: "2026-10-18", bis: "2026-10-20", status: "Abgeholt" })];
+    expect(zimmerAm({ zimmer, buchungen: b, hunde }, "2026-10-20").find((x) => x.zimmer.id === "zimmer-2")?.gaeste).toEqual([]);
+    expect(zimmerAm({ zimmer, buchungen: b, hunde }, "2026-10-19").find((x) => x.zimmer.id === "zimmer-2")?.gaeste.length).toBe(1);
+  });
 });
 
 describe("Kasse Pension", () => {

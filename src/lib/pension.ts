@@ -372,9 +372,12 @@ export const abrechnungBetrag = (z: Pick<AbrechnungZeile, "tage" | "naechte" | "
 
 export type Gast = { buchung: Buchung; hund: Hund };
 
-/** Wer an einem Tag in welchem Zimmer ist (Ankunfts- und Abholtag zählen mit). */
+/**
+ * Wer an einem Tag in welchem Zimmer ist (Ankunfts- und Abholtag zählen mit).
+ * Wer am Abholtag schon ausgecheckt ist, ist weg und gibt das Zimmer frei.
+ */
 export function zimmerAm(d: { zimmer: Zimmer[]; buchungen: Buchung[]; hunde: Hund[] }, tag: string): { zimmer: Zimmer; gaeste: Gast[] }[] {
-  const gaeste = d.buchungen.filter((b) => istDa(b, tag)).flatMap((b) =>
+  const gaeste = d.buchungen.filter((b) => istDa(b, tag) && !(b.status === "Abgeholt" && b.bis <= tag)).flatMap((b) =>
     b.hunde.map((x) => ({ buchung: b, hund: d.hunde.find((h) => h.id === x.id) ?? ({ ...leererHundFuer(x.name), id: x.id, kundeId: b.kundeId } as Hund) })),
   );
   const belegt = new Set(gaeste.map((g) => g.buchung.zimmerId));
