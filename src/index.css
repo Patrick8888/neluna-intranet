@@ -337,9 +337,14 @@ button.dp-dienst:hover { border-color: var(--accent); }
 /* Pension: Zimmerübersicht und Futterplan */
 .zimmer-raster { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
 .zimmer-karte { align-content: start; }
-.zimmer-karte.frei { opacity: 0.6; }
+.zimmer-karte.frei > .item-row { opacity: 0.6; }
 .zimmer-gast { display: grid; gap: 4px; padding-top: 8px; border-top: 1px solid var(--line); }
 .zimmer-gast a { color: var(--ink); }
+.zimmer-namen { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
+a.pill.zimmer-hund { font-size: 0.86rem; letter-spacing: 0.02em; text-transform: none; padding: 5px 10px; color: var(--ink); }
+.zimmer-eintragen { display: grid; gap: 6px; padding-top: 8px; }
+.zimmer-eintragen input[type="search"] { width: 100%; }
+.zimmer-treffer { display: flex; flex-wrap: wrap; gap: 6px; }
 .zimmer-futter { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.85rem; }
 .zimmer-futter .pill { text-transform: none; letter-spacing: 0; white-space: normal; }
 table.futterplan th, table.futterplan td { text-align: left; white-space: normal; vertical-align: top; }

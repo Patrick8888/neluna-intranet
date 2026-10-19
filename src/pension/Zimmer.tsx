@@ -1,40 +1,85 @@
-// Zimmerübersicht: welcher Hund ist an einem Tag in welchem Zimmer, mit Futter und Medikamenten.
-import { useState } from "react";
+// Zimmerübersicht: welcher Hund ist an einem Tag in welchem Zimmer; Hunde direkt im Zimmer eintragen, dazu Futter und Medikamente.
+import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { datum, heute, plusTage, wochentagKurz } from "../lib/format";
-import { klassenName, zimmerAm, type Gast } from "../lib/pension";
+import { collection, doc, setDoc } from "firebase/firestore";
+import { db } from "../firebase";
+import { useIch } from "../auth";
+import { datum, heute, plusTage, wochentagKurz, zeitstempel } from "../lib/format";
+import { belegungPruefen, preisProHund, zimmerAm, type Hund, type Zimmer as ZimmerTyp } from "../lib/pension";
+import { darf, STUFE } from "../lib/rollen";
+import { speichern, useToast } from "../ui";
 import { usePension } from "./daten";
 
-function GastZeile({ g, tag }: { g: Gast; tag: string }) {
-  const { hund: h, buchung: b } = g;
+/** Suchfeld im Zimmer: Hund suchen und direkt für diesen Tag eintragen (Buchung ab dem Tag). */
+function Eintragen({ z, tag, zeigen }: { z: ZimmerTyp; tag: string; zeigen: (t: string) => void }) {
+  const ich = useIch();
+  const d = usePension();
+  const [suche, setSuche] = useState("");
+  const [hund, setHund] = useState<Hund | null>(null);
+  const [bis, setBis] = useState(plusTage(tag, 1));
+  const [id] = useState(() => doc(collection(db, "pension_buchungen")).id);
+  const imHaus = new Set(zimmerAm(d, tag).flatMap((r) => r.gaeste.map((g) => g.hund.id)));
+  const q = suche.trim().toLowerCase();
+  const treffer = q
+    ? d.hunde
+        .filter((h) => !imHaus.has(h.id))
+        .map((h) => ({ h, k: d.kunden.find((k) => k.id === h.kundeId) }))
+        .filter(({ h, k }) => [h.name, h.rasse, k?.name].some((x) => x?.toLowerCase().includes(q)))
+        .sort((x, y) => x.h.name.localeCompare(y.h.name, "de"))
+        .slice(0, 6)
+    : [];
+  const fehler = hund ? belegungPruefen(d, { id, zimmerId: z.id, von: tag, bis, hundIds: [hund.id] }) : null;
+
+  async function speichernBuchung(e: FormEvent) {
+    e.preventDefault();
+    if (!hund) return;
+    if (fehler) return zeigen(fehler);
+    const kunde = d.kunden.find((k) => k.id === hund.kundeId);
+    const ok = await speichern(zeigen, () => setDoc(doc(db, "pension_buchungen", id), {
+      kundeId: hund.kundeId, kundeName: kunde?.name ?? "", hunde: [{ id: hund.id, name: hund.name }], zimmerId: z.id, von: tag, bis,
+      status: tag === heute() ? "Eingecheckt" : "Bestätigt", leistungen: [], preis: preisProHund({ von: tag, bis }, d.preise), bemerkung: "",
+      bezahlt: false, zahlungsart: "", betrag: 0, bezahltAm: "", erstellt: zeitstempel(), person: ich.name, uid: ich.uid,
+    }), `${hund.name} in ${z.name} eingetragen`);
+    if (ok) {
+      setHund(null);
+      setSuche("");
+    }
+  }
+
+  if (hund) {
+    return (
+      <form className="zimmer-eintragen" onSubmit={speichernBuchung}>
+        <strong>{hund.name} eintragen</strong>
+        <label>Abholung<input type="date" value={bis} min={tag} onChange={(e) => setBis(e.target.value)} required /></label>
+        {fehler && <p className="notice bad">{fehler}</p>}
+        <div className="actions">
+          <button className="btn small" disabled={!!fehler}>Eintragen</button>
+          <button type="button" className="btn ghost small" onClick={() => setHund(null)}>Abbrechen</button>
+        </div>
+      </form>
+    );
+  }
   return (
-    <div className="zimmer-gast">
-      <div className="item-row">
-        <Link to={`/pension/hund/${h.id}`}><strong>{h.name}</strong></Link>
-        <span className="actions">
-          {b.von === tag && <span className="pill good">Ankunft</span>}
-          {b.bis === tag && <span className="pill warn">Abholung</span>}
-          {b.status === "Bestätigt" && b.von < tag && <span className="pill acc">nicht eingecheckt</span>}
-        </span>
-      </div>
-      <div className="meta">
-        {[h.rasse, klassenName(h.gewichtsklasse)].filter(Boolean).join(" · ") && <span>{[h.rasse, klassenName(h.gewichtsklasse)].filter(Boolean).join(" · ")}</span>}
-        <span>{b.kundeName}</span>
-        <span>bis {wochentagKurz(b.bis)} {datum(b.bis)}</span>
-      </div>
-      <div className="zimmer-futter">
-        <span><b>Futter:</b> {[h.futter, h.menge, h.fuetterungszeiten].filter(Boolean).join(" · ") || "nicht erfasst"}</span>
-        {h.medikamente && <span className="pill bad">Medikamente: {h.medikamente}</span>}
-        {h.allergien && <span className="pill warn">Allergie: {h.allergien}</span>}
-        {!h.vertraeglich && <span className="pill bad">nicht verträglich</span>}
-        {b.leistungen.includes("Eigenes Futter") && <span className="pill">eigenes Futter</span>}
-      </div>
+    <div className="zimmer-eintragen">
+      <input type="search" aria-label={`Hund eintragen in ${z.name}`} placeholder="Hund suchen und eintragen" value={suche} onChange={(e) => setSuche(e.target.value)} />
+      {q && (
+        <div className="zimmer-treffer">
+          {treffer.length ? treffer.map(({ h, k }) => (
+            <button key={h.id} type="button" className="chip" onClick={() => { setHund(h); setBis(plusTage(tag, 1)); }}>
+              {h.name}{k ? ` · ${k.name}` : ""}
+            </button>
+          )) : <span className="hint">Kein Hund gefunden. Neue Hunde in der <Link to="/pension/kartei">Kartei</Link> erfassen.</span>}
+        </div>
+      )}
     </div>
   );
 }
 
 export function Zimmer() {
   const d = usePension();
+  const ich = useIch();
+  const { zeigen, element } = useToast();
+  const bearbeiten = darf(ich.rollen, "pension", STUFE.bearbeiten);
   const [tag, setTag] = useState(heute());
   const raeume = zimmerAm(d, tag);
   const gaeste = raeume.flatMap((r) => r.gaeste.map((g) => ({ ...g, zimmer: r.zimmer.name })));
@@ -59,7 +104,12 @@ export function Zimmer() {
                 <strong>{z.name}</strong>
                 <span className="pill">{g.length ? `${g.length} / ${z.maxHunde}` : "frei"}</span>
               </div>
-              {g.map((x) => <GastZeile key={`${x.buchung.id}-${x.hund.id}`} g={x} tag={tag} />)}
+              {g.length > 0 && (
+                <div className="zimmer-namen">
+                  {g.map((x) => <Link key={`${x.buchung.id}-${x.hund.id}`} className="pill zimmer-hund" to={`/pension/hund/${x.hund.id}`}>{x.hund.name}</Link>)}
+                </div>
+              )}
+              {bearbeiten && g.length < z.maxHunde && <div className="no-print"><Eintragen key={tag} z={z} tag={tag} zeigen={zeigen} /></div>}
             </article>
           ))}
         </div>
@@ -89,6 +139,7 @@ export function Zimmer() {
           <p className="hint no-print">Abhaken unter <Link to="/pension/tagesplan">Tagesplan</Link>. Angaben ändern im Stammblatt des Hundes.</p>
         </section>
       )}
+      {element}
     </>
   );
 }
