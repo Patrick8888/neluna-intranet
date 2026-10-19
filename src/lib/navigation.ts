@@ -19,7 +19,7 @@ export const BEREICHE: Bereich[] = [
   { modul: "kalender", titel: "Kalender", beschreibung: "Pension, Laden, Fahrten, Ferien, Sitzungen", pfad: "/kalender" },
   { modul: "chat", titel: "Chat", beschreibung: "Gruppen und Direktnachrichten, mit Fotos", pfad: "/chat" },
   { modul: "start", titel: "Mitteilungen", beschreibung: "Infos der Geschäftsführung mit Gelesen-Bestätigung", pfad: "/mitteilungen" },
-  { modul: "personal", titel: "Personal", beschreibung: "Dienstplan, Zeiterfassung, Ferien, Abwesenheiten", pfad: "/personal" },
+  { modul: "personal", titel: "Personal", beschreibung: "Dienstplan, Ferien, Abwesenheiten", pfad: "/personal" },
   { modul: "aufgaben", titel: "Aufgaben", beschreibung: "Pendenzen und wiederkehrende Aufgaben", pfad: "/aufgaben" },
   { modul: "dokumente", titel: "Dokumente", beschreibung: "Handbuch, Reglemente, Anleitungen", pfad: "/dokumente" },
   { modul: "admin", titel: "Benutzer", beschreibung: "Profile, Rollen und Zugänge verwalten", pfad: "/admin/benutzer" },

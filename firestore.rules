@@ -647,7 +647,7 @@ service cloud.firestore {
         || (teamLesen() && resource.data.mitarbeiterUid == request.auth.uid && resource.data.status == 'Beantragt');
     }
 
-    // Zeiterfassung: jede Person erfasst ihre eigene Zeit; wer Ferien freigibt, sieht und korrigiert die Zeiten des Bereichs.
+    // Zeiterfassung (in der App seit 19.10.2026 ausgeblendet, die erfassten Zeiten bleiben): jede Person erfasst ihre eigene Zeit; wer Ferien freigibt, sieht und korrigiert die Zeiten des Bereichs.
     function zeitLesen(d) {
       return teamLesen() && (d.mitarbeiterUid == request.auth.uid
         || eineVon(['geschaeftsfuehrung'])
