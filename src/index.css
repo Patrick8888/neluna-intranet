@@ -342,6 +342,8 @@ button.dp-dienst:hover { border-color: var(--accent); }
 .zimmer-gast a { color: var(--ink); }
 .zimmer-namen { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line); }
 a.pill.zimmer-hund { font-size: 0.86rem; letter-spacing: 0.02em; text-transform: none; padding: 5px 10px; color: var(--ink); }
+.zimmer-gastzeile.offen { flex-basis: 100%; display: grid; gap: 8px; }
+.zimmer-gastkopf { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .zimmer-eintragen { display: grid; gap: 6px; padding-top: 8px; }
 .zimmer-eintragen input[type="search"] { width: 100%; }
 .zimmer-treffer { display: flex; flex-wrap: wrap; gap: 6px; }

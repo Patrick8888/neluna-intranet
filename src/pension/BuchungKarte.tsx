@@ -12,7 +12,7 @@ import { usePension } from "./daten";
 
 export const statusFarbe: Record<string, string> = { Anfrage: "warn", "Bestätigt": "acc", Eingecheckt: "good", Abgeholt: "", Storniert: "bad" };
 
-function Auschecken({ b, zeigen, fertig }: { b: Buchung; zeigen: (t: string) => void; fertig: () => void }) {
+export function Auschecken({ b, zeigen, fertig }: { b: Buchung; zeigen: (t: string) => void; fertig: () => void }) {
   const ich = useIch();
   const [betrag, setBetrag] = useState(String(b.preis || ""));
   const [art, setArt] = useState<Zahlungsart>("Bar");

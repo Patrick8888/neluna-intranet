@@ -1,13 +1,14 @@
 // Zimmerübersicht: welcher Hund ist an einem Tag in welchem Zimmer; Hunde direkt im Zimmer eintragen, dazu Futter und Medikamente.
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router";
-import { collection, doc, setDoc } from "firebase/firestore";
+import { collection, doc, setDoc, updateDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useIch } from "../auth";
 import { datum, heute, plusTage, wochentagKurz, zeitstempel } from "../lib/format";
-import { belegungPruefen, preisProHund, zimmerAm, type Hund, type Zimmer as ZimmerTyp } from "../lib/pension";
+import { belegungPruefen, preisProHund, zimmerAm, type Gast, type Hund, type Zimmer as ZimmerTyp } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { speichern, useToast } from "../ui";
+import { Auschecken } from "./BuchungKarte";
 import { usePension } from "./daten";
 
 /** Suchfeld im Zimmer: Hund suchen und direkt für diesen Tag eintragen (Buchung ab dem Tag). */
@@ -75,12 +76,45 @@ function Eintragen({ z, tag, zeigen }: { z: ZimmerTyp; tag: string; zeigen: (t: 
   );
 }
 
+/**
+ * Hundename im Zimmer, am heutigen Tag mit dem nächsten Schritt: Einchecken bei der Ankunft,
+ * Auschecken mit Zahlung bei der Abholung (der Betrag geht als Vorschlag in den Kassenabschluss).
+ */
+function GastAktion({ g, tag, ersterDerBuchung, bearbeiten, offen, setOffen, zeigen }: {
+  g: Gast; tag: string; ersterDerBuchung: boolean; bearbeiten: boolean; offen: boolean; setOffen: (o: boolean) => void; zeigen: (t: string) => void;
+}) {
+  const ich = useIch();
+  const b = g.buchung;
+  const heuteAktiv = bearbeiten && ersterDerBuchung && tag === heute();
+  const einchecken = heuteAktiv && (b.status === "Anfrage" || b.status === "Bestätigt") && b.von <= tag;
+  const auschecken = heuteAktiv && b.status === "Eingecheckt";
+  const name = b.hunde.length > 1 && ersterDerBuchung ? b.hunde.map((h) => h.name).join(" + ") : g.hund.name;
+  if (b.hunde.length > 1 && !ersterDerBuchung) return null;
+  return (
+    <div className={`zimmer-gastzeile${offen ? " offen" : ""}`}>
+      <div className="zimmer-gastkopf">
+        <Link className="pill zimmer-hund" to={`/pension/hund/${g.hund.id}`}>{name}</Link>
+        {einchecken && (
+          <button type="button" className="btn small" onClick={() => void speichern(zeigen, () => updateDoc(doc(db, "pension_buchungen", b.id), { status: "Eingecheckt", geaendertVon: ich.uid }), `${name} eingecheckt`)}>
+            Einchecken
+          </button>
+        )}
+        {auschecken && !offen && (
+          <button type="button" className={`btn small${b.bis === tag ? "" : " ghost"}`} onClick={() => setOffen(true)}>Auschecken</button>
+        )}
+      </div>
+      {offen && <Auschecken b={b} zeigen={zeigen} fertig={() => setOffen(false)} />}
+    </div>
+  );
+}
+
 export function Zimmer() {
   const d = usePension();
   const ich = useIch();
   const { zeigen, element } = useToast();
   const bearbeiten = darf(ich.rollen, "pension", STUFE.bearbeiten);
   const [tag, setTag] = useState(heute());
+  const [checkout, setCheckout] = useState<string | null>(null);
   const raeume = zimmerAm(d, tag);
   const gaeste = raeume.flatMap((r) => r.gaeste.map((g) => ({ ...g, zimmer: r.zimmer.name })));
 
@@ -106,7 +140,10 @@ export function Zimmer() {
               </div>
               {g.length > 0 && (
                 <div className="zimmer-namen">
-                  {g.map((x) => <Link key={`${x.buchung.id}-${x.hund.id}`} className="pill zimmer-hund" to={`/pension/hund/${x.hund.id}`}>{x.hund.name}</Link>)}
+                  {g.map((x, i) => (
+                    <GastAktion key={`${x.buchung.id}-${x.hund.id}`} g={x} tag={tag} ersterDerBuchung={g.findIndex((y) => y.buchung.id === x.buchung.id) === i}
+                      bearbeiten={bearbeiten} offen={checkout === x.buchung.id} setOffen={(o) => setCheckout(o ? x.buchung.id : null)} zeigen={zeigen} />
+                  ))}
                 </div>
               )}
               {bearbeiten && g.length < z.maxHunde && <div className="no-print"><Eintragen key={tag} z={z} tag={tag} zeigen={zeigen} /></div>}
