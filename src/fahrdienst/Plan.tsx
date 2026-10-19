@@ -11,6 +11,7 @@ import {
 import { darf, STUFE } from "../lib/rollen";
 import { LoeschKnopf, speichern, useAngezeigt, useTeam, useToast } from "../ui";
 import { usePension } from "../pension/daten";
+import { volleAdresse } from "../lib/pension";
 import { FahrtKarte, fahrtFarbe } from "./FahrtKarte";
 import { useFahrdienst } from "./daten";
 
@@ -49,7 +50,7 @@ function Formular({ vorhanden, vorschlag, fertig, zeigen }: { vorhanden?: Fahrt;
   function kundeWaehlen(kid: string) {
     const k = p.kunden.find((x) => x.id === kid);
     if (!k) return set({ kundeName: "", telefon: "", adresse: "", hunde: [] });
-    set({ kundeName: k.name, telefon: k.telefon, adresse: k.adresse, hunde: p.hunde.filter((h) => h.kundeId === k.id).map((h) => ({ id: h.id, name: h.name })) });
+    set({ kundeName: k.name, telefon: k.telefon, adresse: volleAdresse(k), hunde: p.hunde.filter((h) => h.kundeId === k.id).map((h) => ({ id: h.id, name: h.name })) });
   }
 
   async function absenden(e: FormEvent) {

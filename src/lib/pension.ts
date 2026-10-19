@@ -39,12 +39,25 @@ export type Kunde = {
   notiz: string;
   telefon2?: string;
   versicherung?: string;
+  /** Name und Vorname getrennt; «name» bleibt «Nachname Vorname» für Listen und Suche. */
+  nachname?: string;
+  vorname?: string;
+  /** «adresse» ist Strasse und Nummer, PLZ und Ort stehen hier. */
+  plzOrt?: string;
+  geburtsdatum?: string;
+  notfallkontakt2?: string;
   /** Hunde des Teams (z. B. von Cristina oder Patrick und Nalan): nicht in der Abrechnung. */
   team?: boolean;
   erstellt?: string;
   person?: string;
   uid?: string;
 };
+
+/** Anzeigename aus Name und Vorname, z. B. «Meier Anna». */
+export const kundenName = (nachname: string, vorname: string) => [nachname.trim(), vorname.trim()].filter(Boolean).join(" ");
+
+/** Ganze Adresse für Fahrdienst und Karte: Strasse, PLZ Ort. */
+export const volleAdresse = (k: Pick<Kunde, "adresse" | "plzOrt">) => [k.adresse, k.plzOrt].map((x) => x?.trim()).filter(Boolean).join(", ");
 
 export type Impfung = { art: string; gueltigBis: string };
 
@@ -76,6 +89,11 @@ export type Hund = {
   spielverhalten?: string;
   freilauf?: string;
   laeufigkeit?: string;
+  tierarzt?: string;
+  tierarztTelefon?: string;
+  /** Gesundheitliche Probleme (Allergien stehen separat). */
+  gesundheit?: string;
+  sozialverhalten?: string;
   erstellt?: string;
   person?: string;
   uid?: string;

@@ -7,6 +7,7 @@ import { darf } from "../lib/rollen";
 import { KommunikationProvider, useKommunikation } from "../chat/daten";
 import { pushAusschalten } from "../push";
 import { useMeineAufgaben, useOffeneAntraege } from "./arbeit";
+import { Logos } from "./Logos";
 
 export function Rahmen() {
   return (
@@ -33,7 +34,7 @@ function Inhalt() {
     <div className="wrap">
       <header className="kopf">
         <Link to="/" aria-label="Zur Startseite">
-          <img className="logo" src="/logo.webp" alt="NeLuna's Pfötli Shop" width={640} height={401} />
+          <Logos />
         </Link>
         <div className="wer">
           <Link to="/profil">{ich.name}</Link>

@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { useIch } from "../auth";
 import { datum, heute, zeitstempel } from "../lib/format";
 import {
-  aufenthaltVon, GESCHLECHTER, GEWICHTSKLASSEN, IMPF_ARTEN, impfWarnungen, istDa, klasseAusGewicht, klassenName, TEAMHUNDE, type Gewichtsklasse, type Hund, type Impfung, type Kunde,
+  aufenthaltVon, GESCHLECHTER, kundenName, GEWICHTSKLASSEN, IMPF_ARTEN, impfWarnungen, istDa, klasseAusGewicht, klassenName, TEAMHUNDE, type Gewichtsklasse, type Hund, type Impfung, type Kunde,
 } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { LoeschKnopf, speichern, useAngezeigt, useToast } from "../ui";
@@ -14,13 +14,16 @@ import { statusFarbe } from "./BuchungKarte";
 import { usePension } from "./daten";
 
 const KUNDE_FELDER = [
-  ["name", "Name", "Vorname Nachname"],
-  ["telefon", "Telefon", "079 123 45 67"],
-  ["telefon2", "Telefon 2", "z. B. Partner/in, Geschäft"],
+  ["nachname", "Name", "z. B. Meier"],
+  ["vorname", "Vorname", "z. B. Anna"],
+  ["adresse", "Adresse", "Strasse und Nummer"],
+  ["plzOrt", "PLZ/Ort", "z. B. 8253 Willisdorf"],
+  ["geburtsdatum", "Geburtsdatum", ""],
+  ["telefon", "Telefonnummer", "079 123 45 67"],
   ["email", "E-Mail", ""],
-  ["adresse", "Adresse", "Strasse, PLZ Ort"],
-  ["notfallkontakt", "Notfallkontakt", "Name und Telefon"],
-  ["tierarzt", "Tierarzt", "Praxis und Telefon"],
+  ["telefon2", "Telefon 2", "z. B. Partner/in, Geschäft"],
+  ["notfallkontakt", "Notfallkontakt 1", "Name und Telefon"],
+  ["notfallkontakt2", "Notfallkontakt 2", "Name und Telefon"],
   ["versicherung", "Haftpflicht / Tierversicherung", "Gesellschaft und Police"],
 ] as const;
 type KundeFeld = (typeof KUNDE_FELDER)[number][0] | "notiz";
@@ -29,8 +32,11 @@ function KundeFormular({ vorhanden, neuAngelegt, darfBearbeiten, zeigen }: { vor
   const ich = useIch();
   const verwalten = darf(ich.rollen, "pension", STUFE.verwalten);
   const [w, setW] = useState<Record<KundeFeld, string>>(() => ({
-    name: vorhanden?.name ?? "", telefon: vorhanden?.telefon ?? "", telefon2: vorhanden?.telefon2 ?? "", email: vorhanden?.email ?? "", adresse: vorhanden?.adresse ?? "",
-    notfallkontakt: vorhanden?.notfallkontakt ?? "", tierarzt: vorhanden?.tierarzt ?? "", versicherung: vorhanden?.versicherung ?? "", notiz: vorhanden?.notiz ?? "",
+    // Ältere Einträge haben nur «name»: er steht dann ganz im Feld Name, bis jemand ihn aufteilt.
+    nachname: vorhanden ? (vorhanden.nachname ?? (vorhanden.vorname ? "" : vorhanden.name)) : "", vorname: vorhanden?.vorname ?? "",
+    adresse: vorhanden?.adresse ?? "", plzOrt: vorhanden?.plzOrt ?? "", geburtsdatum: vorhanden?.geburtsdatum ?? "",
+    telefon: vorhanden?.telefon ?? "", email: vorhanden?.email ?? "", telefon2: vorhanden?.telefon2 ?? "",
+    notfallkontakt: vorhanden?.notfallkontakt ?? "", notfallkontakt2: vorhanden?.notfallkontakt2 ?? "", versicherung: vorhanden?.versicherung ?? "", notiz: vorhanden?.notiz ?? "",
   }));
   const [team, setTeam] = useState(vorhanden?.team ?? false);
   const angezeigt = useAngezeigt();
@@ -38,7 +44,8 @@ function KundeFormular({ vorhanden, neuAngelegt, darfBearbeiten, zeigen }: { vor
 
   async function absenden(e: FormEvent) {
     e.preventDefault();
-    const felder = { ...(Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v.trim()])) as Record<KundeFeld, string>), team };
+    const werte = Object.fromEntries(Object.entries(w).map(([k, v]) => [k, v.trim()])) as Record<KundeFeld, string>;
+    const felder = { ...werte, name: kundenName(werte.nachname, werte.vorname), team };
     if (!felder.name) return zeigen("Bitte einen Namen eingeben");
     if (vorhanden) {
       await speichern(zeigen, () => updateDoc(doc(db, "pension_kunden", vorhanden.id), felder), "Gespeichert");
@@ -55,7 +62,8 @@ function KundeFormular({ vorhanden, neuAngelegt, darfBearbeiten, zeigen }: { vor
     <form className="grid" onSubmit={absenden}>
       <fieldset className="wide grid" disabled={!darfBearbeiten}>
         {KUNDE_FELDER.map(([k, titel, platzhalter]) => (
-          <label key={k}>{titel}<input value={w[k]} onChange={(e) => setW({ ...w, [k]: e.target.value })} placeholder={platzhalter} required={k === "name"} type={k === "email" ? "email" : "text"} /></label>
+          <label key={k}>{titel}<input value={w[k]} onChange={(e) => setW({ ...w, [k]: e.target.value })} placeholder={platzhalter} required={k === "nachname"}
+            type={k === "email" ? "email" : k === "geburtsdatum" ? "date" : k.startsWith("telefon") ? "tel" : "text"} max={k === "geburtsdatum" ? heute() : undefined} /></label>
         ))}
         <label className="wide">Notiz<textarea value={w.notiz} onChange={(e) => setW({ ...w, notiz: e.target.value })} placeholder="z. B. Schlüssel für Abholung beim Nachbarn" /></label>
         <label className="check wide"><input type="checkbox" checked={team} onChange={(e) => setTeam(e.target.checked)} /> Hunde vom Team (erscheinen nicht in der Abrechnung)</label>
@@ -76,13 +84,18 @@ const leererHund: HundWerte = {
   name: "", rasse: "", geburtsdatum: "", geschlecht: "", kastriert: false, futter: "", menge: "", medikamente: "", allergien: "",
   verhalten: "", vertraeglich: true, notiz: "", impfungen: [],
   gewicht: "", gewichtsklasse: "", chipnummer: "", farbe: "", fuetterungszeiten: "", leckerli: "", schlafplatz: "", kommandos: "",
-  aengste: "", spielverhalten: "", freilauf: "", laeufigkeit: "",
+  aengste: "", spielverhalten: "", freilauf: "", laeufigkeit: "", tierarzt: "", tierarztTelefon: "", gesundheit: "", sozialverhalten: "",
 };
 
-function HundFormular({ kundeId, vorhanden, fertig, darfBearbeiten, zeigen }: { kundeId: string; vorhanden?: Hund; fertig?: () => void; darfBearbeiten: boolean; zeigen: (t: string) => void }) {
+function HundFormular({ kunde, vorhanden, fertig, darfBearbeiten, zeigen }: { kunde: Kunde; vorhanden?: Hund; fertig?: () => void; darfBearbeiten: boolean; zeigen: (t: string) => void }) {
   const ich = useIch();
+  const kundeId = kunde.id;
   const verwalten = darf(ich.rollen, "pension", STUFE.verwalten);
-  const [w, setW] = useState<HundWerte>(() => (vorhanden ? { ...leererHund, ...vorhanden } : leererHund));
+  // Der Tierarzt stand früher bei der Halter/in; er dient als Vorschlag, bis er beim Hund eingetragen ist.
+  const [w, setW] = useState<HundWerte>(() => {
+    const x = vorhanden ? { ...leererHund, ...vorhanden } : leererHund;
+    return { ...x, tierarzt: x.tierarzt || kunde.tierarzt || "" };
+  });
   const set = (x: Partial<HundWerte>) => setW((alt) => ({ ...alt, ...x }));
   const text = (k: keyof HundWerte, titel: string, platzhalter = "", breit = false) => (
     <label className={breit ? "wide" : undefined}>
@@ -115,8 +128,9 @@ function HundFormular({ kundeId, vorhanden, fertig, darfBearbeiten, zeigen }: { 
         {text("rasse", "Rasse")}
         <label>Geburtsdatum<input type="date" value={w.geburtsdatum} max={heute()} onChange={(e) => set({ geburtsdatum: e.target.value })} /></label>
         <label>Geschlecht<select value={w.geschlecht} onChange={(e) => set({ geschlecht: e.target.value })}><option value="">–</option>{GESCHLECHTER.map((g) => <option key={g}>{g}</option>)}</select></label>
-        {text("farbe", "Farbe / Aussehen")}
-        {text("chipnummer", "Chipnummer")}
+        {text("chipnummer", "Chip Nr.")}
+        <label>Kastriert/Sterilisiert<select value={w.kastriert ? "ja" : "nein"} onChange={(e) => set({ kastriert: e.target.value === "ja" })}><option value="nein">Nein</option><option value="ja">Ja</option></select></label>
+        {text("farbe", "Besondere Merkmale", "z. B. Farbe, Narbe, kupiertes Ohr")}
         <label>Gewicht kg<input inputMode="decimal" value={w.gewicht ?? ""} onChange={(e) => set({ gewicht: e.target.value, gewichtsklasse: klasseAusGewicht(e.target.value) || w.gewichtsklasse })} placeholder="z. B. 28" /></label>
         <fieldset>
           <legend>Grösse fürs Zimmer</legend>
@@ -126,24 +140,13 @@ function HundFormular({ kundeId, vorhanden, fertig, darfBearbeiten, zeigen }: { 
             ))}
           </div>
         </fieldset>
-        <label className="check"><input type="checkbox" checked={w.kastriert} onChange={(e) => set({ kastriert: e.target.checked })} /> Kastriert</label>
-        <label className="check"><input type="checkbox" checked={w.vertraeglich} onChange={(e) => set({ vertraeglich: e.target.checked })} /> Verträglich mit anderen Hunden</label>
         {w.geschlecht === "Hündin" && text("laeufigkeit", "Letzte Läufigkeit", "z. B. August 2026")}
-        <h3 className="lbl wide">Füttern</h3>
-        {text("futter", "Futter", "Marke und Sorte")}
-        {text("menge", "Menge", "z. B. 2 × 150 g, morgens und abends")}
-        {text("fuetterungszeiten", "Fütterungszeiten", "z. B. 7 Uhr und 18 Uhr")}
-        {text("leckerli", "Leckerli / Kauartikel", "erlaubt, nicht erlaubt, eigene")}
+        <h3 className="lbl wide">Gesundheitsinformationen</h3>
+        {text("tierarzt", "Tierarzt", "Praxis, Ort")}
+        <label>Telefonnummer Tierarzt<input type="tel" value={w.tierarztTelefon ?? ""} onChange={(e) => set({ tierarztTelefon: e.target.value })} placeholder="052 123 45 67" /></label>
         {text("allergien", "Allergien / Unverträglichkeiten")}
+        {text("gesundheit", "Gesundheitliche Probleme", "z. B. Arthrose, Herz, Epilepsie", true)}
         {text("medikamente", "Medikamente", "Name, Dosis, wann", true)}
-        <h3 className="lbl wide">Verhalten und Gewohnheiten</h3>
-        {text("freilauf", "Freilauf", "z. B. nur an der Leine, kommt auf Pfiff")}
-        {text("schlafplatz", "Schlafplatz", "z. B. eigenes Körbchen, mag es warm")}
-        {text("kommandos", "Kommandos", "z. B. Sitz, Platz, Bleib, Hier")}
-        {text("aengste", "Ängste", "z. B. Gewitter, Feuerwerk, Männer mit Hut")}
-        {text("spielverhalten", "Spielverhalten", "z. B. liebt Bälle, grob mit kleinen Hunden", true)}
-        {text("verhalten", "Verhalten", "z. B. zieht an der Leine, bellt bei Besuch", true)}
-        {text("notiz", "Besonderes", "", true)}
         <div className="wide">
           <div className="lbl">Impfungen</div>
           <div className="prows">
@@ -158,6 +161,21 @@ function HundFormular({ kundeId, vorhanden, fertig, darfBearbeiten, zeigen }: { 
           </div>
           <datalist id="impfarten">{IMPF_ARTEN.map((a) => <option key={a} value={a} />)}</datalist>
         </div>
+        <h3 className="lbl wide">Verhalten und Gewohnheiten</h3>
+        <div className="lbl wide">Fütterungsanweisung</div>
+        {text("futter", "Futter", "Marke und Sorte")}
+        {text("menge", "Menge", "z. B. 2 × 150 g, morgens und abends")}
+        {text("fuetterungszeiten", "Fütterungszeiten", "z. B. 7 Uhr und 18 Uhr")}
+        {text("leckerli", "Leckerli / Kauartikel", "erlaubt, nicht erlaubt, eigene")}
+        {text("verhalten", "Besondere Verhaltensweise", "z. B. zieht an der Leine, bellt bei Besuch", true)}
+        {text("sozialverhalten", "Sozialverhalten", "z. B. mit Hündinnen gut, mit Rüden vorsichtig, liebt Kinder", true)}
+        <label className="check wide"><input type="checkbox" checked={w.vertraeglich} onChange={(e) => set({ vertraeglich: e.target.checked })} /> Verträglich mit anderen Hunden (darf ein Zimmer teilen)</label>
+        {text("freilauf", "Freilauf", "z. B. nur an der Leine, kommt auf Pfiff")}
+        {text("schlafplatz", "Schlafplatz", "z. B. eigenes Körbchen, mag es warm")}
+        {text("kommandos", "Kommandos", "z. B. Sitz, Platz, Bleib, Hier")}
+        {text("aengste", "Ängste", "z. B. Gewitter, Feuerwerk, Männer mit Hut")}
+        {text("spielverhalten", "Spielverhalten", "z. B. liebt Bälle, grob mit kleinen Hunden", true)}
+        {text("notiz", "Besonderes", "", true)}
       </fieldset>
       {darfBearbeiten && (
         <div className="wide actions">
@@ -206,11 +224,11 @@ function KundeDetail({ kundeId, darfBearbeiten }: { kundeId: string; darfBearbei
                   {impfWarnungen(h, heute(), heute()).length > 0 && <span className="pill warn" style={{ marginLeft: 8 }}>Impfung prüfen</span>}
                 </summary>
                 <div className="actions"><Link className="btn ghost small" to={`/pension/hund/${h.id}`}>Stammblatt {h.name}</Link></div>
-                <HundFormular kundeId={kunde.id} vorhanden={h} darfBearbeiten={darfBearbeiten} zeigen={zeigen} />
+                <HundFormular kunde={kunde} vorhanden={h} darfBearbeiten={darfBearbeiten} zeigen={zeigen} />
               </details>
             ))}
             {neuerHund ? (
-              <div className="item"><HundFormular kundeId={kunde.id} darfBearbeiten={darfBearbeiten} fertig={() => setNeuerHund(false)} zeigen={zeigen} /></div>
+              <div className="item"><HundFormular kunde={kunde} darfBearbeiten={darfBearbeiten} fertig={() => setNeuerHund(false)} zeigen={zeigen} /></div>
             ) : darfBearbeiten && (
               <div><button type="button" className="btn ghost small" onClick={() => setNeuerHund(true)}>Hund hinzufügen</button></div>
             )}

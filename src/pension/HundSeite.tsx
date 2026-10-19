@@ -2,11 +2,11 @@
 import { Link, useParams } from "react-router";
 import { useIch } from "../auth";
 import { datum, heute, wochentagKurz } from "../lib/format";
-import { aufenthaltVon, impfWarnungen, istDa } from "../lib/pension";
+import { aufenthaltVon, impfWarnungen, istDa, volleAdresse } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { statusFarbe } from "./BuchungKarte";
 import { usePension } from "./daten";
-import { HundBlatt } from "./Stammblatt";
+import { HundBlatt, Notfall } from "./Stammblatt";
 
 export function HundSeite() {
   const { hundId } = useParams();
@@ -45,12 +45,12 @@ export function HundSeite() {
           <div className="sb-raster">
             <div className="sb-zeile"><span>Halter/in</span><b>{kunde.name}</b></div>
             <div className="sb-zeile"><span>Telefon</span><b>{kunde.telefon ? <a href={`tel:${kunde.telefon.replace(/\s/g, "")}`}>{kunde.telefon}</a> : " "}</b></div>
-            <div className="sb-zeile"><span>Notfallkontakt</span><b>{kunde.notfallkontakt || " "}</b></div>
-            <div className="sb-zeile"><span>Tierarzt</span><b>{kunde.tierarzt || " "}</b></div>
+            <div className="sb-zeile"><span>Adresse</span><b>{volleAdresse(kunde) || " "}</b></div>
           </div>
         )}
+        {kunde && <><h3 className="lbl">Notfallkontakte Halter/in</h3><Notfall k={kunde} /></>}
       </section>
-      <HundBlatt h={h} />
+      <HundBlatt h={h} kunde={kunde} />
       <section className="panel sb-block">
         <h2>Aufenthalte</h2>
         {aufenthalte.length ? (

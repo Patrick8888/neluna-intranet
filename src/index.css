@@ -57,7 +57,10 @@ h2 { font-size: 1.15rem; font-weight: 700; margin: 0; }
 
 /* Kopfzeile und Navigation */
 .kopf { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 20px; padding-block: 20px 8px; }
-.kopf .logo { display: block; width: min(170px, 46vw); height: auto; }
+.logos { display: flex; align-items: center; gap: clamp(10px, 3vw, 18px); }
+.logos img { display: block; height: auto; }
+.kopf .logo { width: min(170px, 42vw); }
+.kopf .logo-nel { width: min(88px, 22vw); }
 .kopf .wer { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; color: var(--muted); }
 .kopf .wer a { color: var(--ink); text-decoration: none; font-weight: 600; }
 nav.tabs { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-block: 10px; position: sticky; top: 0; background: var(--bg); z-index: 5; }
@@ -117,7 +120,9 @@ details summary { cursor: pointer; font-weight: 600; color: var(--muted); }
 
 /* Login */
 .login { max-width: 420px; margin: 6vh auto 0; }
-.login .logo { display: block; width: min(240px, 70vw); height: auto; margin: 8px auto 4px; }
+.login .logos { justify-content: center; margin: 8px auto 4px; }
+.login .logo { width: min(220px, 52vw); }
+.login .logo-nel { width: min(112px, 27vw); }
 
 /* Laden und Sitzungen */
 .btn.danger.armed { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }

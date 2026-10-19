@@ -1,6 +1,6 @@
 // Fachlogik von Fahrdienst und Fahrzeugen. Unabhängig von Firebase, damit sie testbar bleibt.
 import { datum, plusTage } from "./format";
-import type { Buchung, Kunde } from "./pension";
+import { volleAdresse, type Buchung, type Kunde } from "./pension";
 
 export const FAHRT_STATUS = ["Geplant", "Unterwegs", "Erledigt", "Abgesagt"] as const;
 export type FahrtStatus = (typeof FAHRT_STATUS)[number];
@@ -87,7 +87,7 @@ export function fahrtenAusBuchungen(buchungen: Buchung[], fahrten: Fahrt[], kund
         if (!noetig || soll < ab) continue;
         const k = kunden.find((x) => x.id === b.kundeId);
         fehlend.push({
-          id, datum: soll, zeit: "", richtung, buchungId: b.id, kundeName: b.kundeName, telefon: k?.telefon ?? "", adresse: k?.adresse ?? "",
+          id, datum: soll, zeit: "", richtung, buchungId: b.id, kundeName: b.kundeName, telefon: k?.telefon ?? "", adresse: k ? volleAdresse(k) : "",
           hunde: b.hunde, status: "Geplant", notiz: "",
         });
       } else if (f.status === "Geplant" || f.status === "Unterwegs") {

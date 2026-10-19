@@ -5,6 +5,7 @@ import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { meldung } from "../lib/fehler";
 import { passwortFehler } from "../lib/passwort";
+import { Logos } from "./Logos";
 
 // Einmalig: die erste Person richtet das Intranet ein und wird Admin.
 // Die Sicherheitsregeln lassen das nur zu, solange noch niemand eingerichtet hat.
@@ -63,7 +64,7 @@ export function Einrichtung() {
 
   return (
     <div className="wrap login">
-      <img className="logo" src="/logo.webp" alt="NeLuna's Pfötli Shop" width={640} height={401} />
+      <Logos />
       <main>
         <div style={{ textAlign: "center" }}>
           <div className="eyebrow">Erster Start</div>
