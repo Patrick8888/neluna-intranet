@@ -74,7 +74,9 @@ Abhol- und Bringfahrten, automatisch aus Buchungen mit Leistung «Fahrdienst Hin
 **Fahrzeuge und Unterhalt:** Pro Fahrzeug Kennzeichen, Kilometerstand und eine Liste von Garagen- und Unterhaltsterminen: Reifenwechsel (Winter-/Sommerreifen, Einlagerung bei der Garage), Service, MFK, Versicherung und Vignette, Reparaturen, Reinigung/Desinfektion der Hundeboxen. Jeder Termin mit Datum, Garage, Kosten, Beleg (Foto) und Notiz. Die Beleg-Fotos kommen mit der Datei-Ablage in Phase 4 (gleich wie Fotos im Chat). Wiederkehrende Termine erzeugen den nächsten automatisch (z. B. Reifenwechsel jeden Oktober und April, Service nach Kilometern oder Datum). Fällige Termine erscheinen auf der Startseite und im Kalender; ein Garagentermin blockiert das Fahrzeug im Fahrdienstplan. Probleme (z. B. Bremsen, Kontrolllampe, Schaden) meldet das Team direkt beim Fahrzeug; ist es nicht fahrbereit, bleibt es für den Fahrdienst gesperrt, bis das Problem erledigt ist.
 
 ### 3.5 Chat
-Gruppenkanäle (Alle, Pension, Laden, Geschäftsführung) und Direktnachrichten. Fotos anhängen (z. B. Foto vom Hund für die Halter-Info oder Lieferschaden). Ungelesen-Anzeige; Push-Benachrichtigung auf dem Handy in einer späteren Phase.
+Gruppen nach Rolle: «Alle», «Pension» (Pension und Fahrdienst), «Laden» (Laden), «Geschäftsführung und Leitungen». Dazu Direktnachrichten zwischen zwei Personen. Fotos anhängen (z. B. Foto vom Hund für die Halter-Info oder Lieferschaden); sie werden im Browser verkleinert und in der Datenbank gespeichert, Cloud Storage ist nicht nötig. Ungelesen-Anzeige in der Navigation, im Fenstertitel und auf der Startseite. Eigene Nachrichten kann man löschen, die Geschäftsführung alle.
+
+**Push-Nachrichten (Entscheid 18.10.2026: Blaze-Tarif):** Eine Server-Funktion (`functions/`) schickt Push-Nachrichten bei neuen Chat-Nachrichten, neuen Mitteilungen und wenn eine Fahrt einer Person zugeteilt, verschoben oder abgesagt wird. Jede Person schaltet Push pro Gerät im Profil ein und wählt die Arten; auf dem iPhone nur mit dem Pfötli Buch auf dem Home-Bildschirm.
 
 ### 3.6 Laden (heutiges Ladenbuch)
 Die sieben Bereiche des Ladenbuchs werden 1:1 übernommen: Kassenbuch (Tagesabschluss mit Bar/Karte/TWINT, Soll-Bargeld, Differenz, Safebag, Wechselgeld-Übernahme, CSV-Export), Übergabe, Bestellungen, Reklamationen, Loomis, Wochenbericht, Sitzungen (Team und Kader). Die bisherigen Einträge werden aus dem Ladenbuch exportiert und importiert. Bis zur Umstellung läuft das Ladenbuch unverändert weiter.
@@ -88,7 +90,7 @@ Die sieben Bereiche des Ladenbuchs werden 1:1 übernommen: Kassenbuch (Tagesabsc
 Einfache Aufgabenliste mit Verantwortlicher Person, Fälligkeit und Bereich; wiederkehrende Aufgaben (z. B. Reinigungsplan, Inventur, Impfausweise prüfen).
 
 ### 3.9 Dokumente und Mitteilungen
-Ablage für Organisationshandbuch, Personalreglement, Anleitungen, Formulare. Mitteilungen der Geschäftsführung mit «Gelesen»-Bestätigung.
+Ablage für Organisationshandbuch, Personalreglement, Anleitungen, Formulare (Phase 5). Mitteilungen der Geschäftsführung mit «Gelesen»-Bestätigung (Phase 4): neue Mitteilungen stehen oben auf der Startseite, bis man sie bestätigt; die Geschäftsführung sieht, wer noch nicht gelesen hat.
 
 ## 4. Datenmodell (Skizze)
 
@@ -148,10 +150,10 @@ Patrick hat am 18.10.2026 entschieden: Das Intranet wird wie das Salonbuch (haar
 | Rechte | **Firestore-Sicherheitsregeln** (`firestore.rules`), mit automatischen Tests | Die Rollen werden auf dem Server geprüft, nicht nur in der Oberfläche |
 | Hosting | **Firebase Hosting** unter `intranet.neluna.ch` | HTTPS gratis, Domain bleibt bei Hostfactory (nur DNS-Einträge) |
 | Dateien (später) | Cloud Storage for Firebase | Fotos von Hunden, Dokumente |
-| Push (später) | Firebase Cloud Messaging | Benachrichtigungen für Chat und Fahrten |
+| Push | Firebase Cloud Messaging mit Cloud Functions (Blaze-Tarif) | Benachrichtigungen für Chat, Mitteilungen und Fahrten |
 | Code | **GitHub-Repository** (privat) | Claude-Code-Threads arbeiten mit Pull Requests, Patrick gibt frei |
 
-**Kosten:** Der kostenlose Spark-Tarif reicht für ein Team dieser Grösse. Erst für Cloud Storage (Fotos) oder serverseitige Funktionen braucht es den Blaze-Tarif (Abrechnung nach Verbrauch, bei dieser Nutzung voraussichtlich wenige Franken oder gratis).
+**Kosten:** Für die Push-Nachrichten läuft das Projekt im Blaze-Tarif (Abrechnung nach Verbrauch, Gratis-Kontingente bleiben; bei dieser Nutzung voraussichtlich gratis oder wenige Franken), mit Budget-Alarm bei CHF 5.
 
 **Was das für Patrick bedeutet:** Kein Server-PC, keine Updates, keine Datensicherung von Hand. Aktualisieren geht mit `npm run deploy`. Die Einrichtung steht in `docs/EINRICHTUNG.md`.
 

@@ -4,9 +4,21 @@ import { auth } from "../firebase";
 import { useIch } from "../auth";
 import { BEREICHE } from "../lib/navigation";
 import { darf } from "../lib/rollen";
+import { KommunikationProvider, useKommunikation } from "../chat/daten";
+import { pushAusschalten } from "../push";
 
 export function Rahmen() {
+  return (
+    <KommunikationProvider>
+      <Inhalt />
+    </KommunikationProvider>
+  );
+}
+
+function Inhalt() {
   const ich = useIch();
+  const k = useKommunikation();
+  const zaehler: Record<string, number> = { "/chat": k.ungeleseneChats, "/mitteilungen": k.offeneMitteilungen };
   const eintraege = [
     { titel: "Heute", pfad: "/" },
     ...BEREICHE.filter((x) => x.pfad && darf(ich.rollen, x.modul)).map((x) => ({ titel: x.titel, pfad: x.pfad! })),
@@ -20,13 +32,14 @@ export function Rahmen() {
         </Link>
         <div className="wer">
           <Link to="/profil">{ich.name}</Link>
-          <button className="btn ghost small" onClick={() => signOut(auth)}>Abmelden</button>
+          <button className="btn ghost small" onClick={() => void pushAusschalten().finally(() => signOut(auth))}>Abmelden</button>
         </div>
       </header>
       <nav className="tabs" aria-label="Bereiche">
         {eintraege.map((e) => (
           <NavLink key={e.pfad} to={e.pfad} end={e.pfad === "/"} className="tab">
             {e.titel}
+            {zaehler[e.pfad] > 0 && <span className="badge" aria-label={`${zaehler[e.pfad]} neu`}>{zaehler[e.pfad]}</span>}
           </NavLink>
         ))}
       </nav>

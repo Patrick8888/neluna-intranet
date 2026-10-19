@@ -28,6 +28,8 @@ import { Fahrzeuge } from "./fahrdienst/Fahrzeuge";
 import { FahrdienstHeute } from "./fahrdienst/Heute";
 import { FahrdienstPlan } from "./fahrdienst/Plan";
 import { Kalender } from "./kalender/Kalender";
+import { Chat } from "./chat/Chat";
+import { Mitteilungen } from "./chat/Mitteilungen";
 
 /** Zeigt die Seite nur mit genügender Berechtigung (die Datenbankregeln prüfen zusätzlich). */
 function Berechtigt({ modul, mindestens = STUFE.lesen, children }: { modul: Modul; mindestens?: Stufe; children: ReactNode }) {
@@ -55,6 +57,8 @@ function Inhalt() {
       <Route element={<Rahmen />}>
         <Route index element={<Start />} />
         <Route path="profil" element={<Profil />} />
+        <Route path="chat" element={<Berechtigt modul="chat"><Chat /></Berechtigt>} />
+        <Route path="mitteilungen" element={<Berechtigt modul="start"><Mitteilungen /></Berechtigt>} />
         <Route path="laden" element={<Berechtigt modul="laden"><Laden /></Berechtigt>}>
           <Route index element={<Navigate to="kasse" replace />} />
           <Route path="kasse" element={<Kasse />} />
