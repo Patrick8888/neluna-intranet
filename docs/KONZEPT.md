@@ -42,7 +42,6 @@ L = lesen, B = bearbeiten, V = verwalten/freigeben, – = kein Zugriff
 | Sitzungsprotokolle Team | V | B | B | L | L |
 | Sitzungsprotokolle Kader | V | B | B | – | – |
 | Dienstplan und Ferien | V | V (Pension) | V (Laden) | L + Antrag | L + Antrag |
-| Zeiterfassung | V | V (Pension) | V (Laden) | B (eigene Zeiten) | B (eigene Zeiten) |
 | Aufgaben / Pendenzen | V | B | B | B | B |
 | Dokumente (Handbuch, Reglemente, Anleitungen) | V | L | L | L | L |
 | Benutzer, Rollen, Einstellungen | V (nur Admin) | – | – | – | – |
@@ -91,7 +90,7 @@ Die sieben Bereiche des Ladenbuchs werden 1:1 übernommen: Kassenbuch (Tagesabsc
 - **Dienstplan:** Wochenplan je Bereich (Laden, Pension, Fahrdienst): Personen als Zeilen, Dienste mit Beginn, Ende und Notiz, Stunden pro Person und Woche, «Vorwoche übernehmen». Den Laden plant die Leitung Laden, Pension und Fahrdienst die Leitung Pension, die Geschäftsführung alles. Alle sehen die Pläne und unter «Meine Dienste» die eigenen; der Dienst des Tages steht auf der Startseite.
 - **Ferien und Abwesenheiten:** Antrag → Freigabe (Laden: Morena mit Rücksprache Nel; Pension und Fahrdienst: Cristina; Geschäftsführung untereinander; Leitungen nie die eigenen), erscheint bewilligt im Kalender und im Dienstplan. Wer freigibt, trägt auch direkt ein (z. B. Krankheit). Krankheit und Unfall sehen nur die Person selbst und wer freigibt; alle anderen sehen «Abwesend». Ferientage werden Montag bis Freitag gezählt.
 
-- **Zeiterfassung (Entscheid 19.10.2026: Pflicht):** Jede Person stempelt auf der Startseite oder unter Personal ein und aus; vergessene Zeiten werden nachgetragen. Beim Ausstempeln wird die Pause nach Arbeitsgesetz vorgeschlagen (über 5½ Std. Arbeit 15 Min., über 7 Std. 30 Min., über 9 Std. 1 Std.), zu kurze Pausen sind markiert. Monatsübersicht mit gearbeiteten Stunden, Soll aus dem Dienstplan und Differenz. Die Leitung Laden sieht und korrigiert die Zeiten des Ladens, die Leitung Pension die von Pension und Fahrdienst, die Geschäftsführung alle; Korrekturen sind mit Namen markiert. CSV-Export pro Monat für den Lohn.
+- **Zeiterfassung:** auf Wunsch wieder herausgenommen (Entscheid 19.10.2026, gleicher Tag wie die Einführung). Bereits erfasste Zeiten bleiben in der Datenbank (Sammlung `zeiten`).
 
 ### 3.8 Aufgaben und Pendenzen
 Einfache Aufgabenliste mit verantwortlicher Person (oder «wer gerade Zeit hat»), Fälligkeit und Bereich; wiederkehrende Aufgaben (täglich bis jährlich, z. B. Reinigungsplan, Inventur, Impfausweise prüfen) rücken beim Abhaken auf den nächsten Termin vor. Alle erfassen und haken ab; ändern dürfen Ersteller/in, Zuständige und Geschäftsführung. Eigene fällige Aufgaben stehen auf der Startseite und als Zähler in der Navigation.
@@ -176,7 +175,7 @@ Patrick hat am 18.10.2026 entschieden: Das Intranet wird wie das Salonbuch (haar
 | **2 – Pension** | Kunden- und Hundekartei, Zimmer, Buchungen, Belegungsplan, Tagesplan, Kassenbuch Pension | Cristina plant die Pension im Intranet |
 | **3 – Fahrdienst und Kalender** | Fahrten aus Buchungen, Fahreransicht, Fahrzeuge mit Garagen- und Unterhaltsterminen, gemeinsamer Kalender | Ein Kalender für alles |
 | **4 – Kommunikation** | Chat, Mitteilungen, Push-Benachrichtigungen | WhatsApp-Gruppen werden überflüssig |
-| **5 – Personal und Organisation** | Dienstplan, Zeiterfassung, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
+| **5 – Personal und Organisation** | Dienstplan, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
 | **später (Ideen)** | Online-Buchungsanfrage für Kundschaft, Rechnungen Pension, Impf-Erinnerungen per E-Mail, Auswertungen | – |
 
 Jede Phase wird in einem eigenen Thread mit Claude Code umgesetzt, als Pull Request im Repository, und erst nach Patricks Freigabe live geschaltet.

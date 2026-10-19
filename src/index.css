@@ -360,12 +360,6 @@ td.warnzelle { color: var(--bad); font-weight: 600; }
 .hund-eintrag:hover { border-color: var(--accent); }
 a.pill { text-decoration: none; }
 
-/* Zeiterfassung */
-.stempeluhr { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
-.stempel-pause { display: flex; align-items: center; gap: 6px; }
-.stempel-pause input { width: 80px; }
-table.zeiten th, table.zeiten td { text-align: left; white-space: normal; }
-table.zeiten td .pill { margin-left: 6px; text-transform: none; letter-spacing: 0; }
 
 /* Stammblatt per Link */
 .stammblatt-teilen { display: grid; gap: 8px; margin-top: 8px; }

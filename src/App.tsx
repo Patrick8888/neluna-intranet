@@ -36,7 +36,6 @@ import { Mitteilungen } from "./chat/Mitteilungen";
 import { Personal } from "./personal/Personal";
 import { Dienstplan } from "./personal/Dienstplan";
 import { Abwesenheiten } from "./personal/Abwesenheiten";
-import { Zeiterfassung } from "./personal/Zeiterfassung";
 import { Aufgaben } from "./aufgaben/Aufgaben";
 import { Dokumente } from "./dokumente/Dokumente";
 
@@ -104,7 +103,6 @@ function Inhalt() {
           <Route index element={<Navigate to="dienstplan" replace />} />
           <Route path="dienstplan" element={<Dienstplan />} />
           <Route path="abwesenheiten" element={<Abwesenheiten />} />
-          <Route path="zeiterfassung" element={<Berechtigt modul="zeiterfassung" mindestens={STUFE.bearbeiten}><Zeiterfassung /></Berechtigt>} />
         </Route>
         <Route path="aufgaben" element={<Berechtigt modul="aufgaben"><Aufgaben /></Berechtigt>} />
         <Route path="dokumente" element={<Berechtigt modul="dokumente"><Dokumente /></Berechtigt>} />
