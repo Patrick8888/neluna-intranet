@@ -10,5 +10,5 @@
     "noUnusedLocals": true,
     "types": []
   },
-  "include": ["src", "../src/lib/push.ts", "../src/lib/chat.ts", "../src/lib/format.ts", "../src/lib/rollen.ts"]
+  "include": ["src", "../src/lib/push.ts", "../src/lib/chat.ts", "../src/lib/format.ts", "../src/lib/rollen.ts", "../src/lib/personal.ts"]
 }

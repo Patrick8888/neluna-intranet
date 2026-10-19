@@ -290,3 +290,29 @@ a.notice { text-decoration: none; display: block; }
   .chat-zurueck { display: inline-block; }
   .chat-nachrichten { max-height: calc(100dvh - 300px); }
 }
+
+/* Personal: Dienstplan */
+table.dienstplan { min-width: 860px; }
+table.dienstplan th, table.dienstplan td { text-align: center; vertical-align: top; white-space: normal; }
+table.dienstplan th:first-child, table.dienstplan .dp-name { position: sticky; left: 0; z-index: 1; text-align: left; width: 120px; min-width: 110px; font-weight: 600; overflow-wrap: anywhere; background: var(--surface); }
+table.dienstplan th:first-child { background: var(--sunk); }
+table.dienstplan th.heute, table.dienstplan td.heute { background: var(--accent-soft); }
+table.dienstplan tr.ich .dp-name { color: var(--accent); }
+.dp-zelle { min-width: 92px; }
+.dp-zelle .pill { display: block; margin-bottom: 4px; }
+.dp-dienst { display: block; width: 100%; margin: 0 0 4px; padding: 4px 6px; border: 1px solid var(--line); border-radius: 8px; background: var(--sunk); color: var(--ink); font: inherit; font-size: 0.8rem; font-weight: 600; text-align: center; }
+button.dp-dienst { cursor: pointer; }
+button.dp-dienst:hover { border-color: var(--accent); }
+.dp-dienst small { display: block; font-weight: 400; color: var(--muted); font-size: 0.72rem; overflow-wrap: anywhere; }
+.dp-neu { display: block; width: 100%; padding: 2px; border: 1px dashed var(--line); border-radius: 8px; background: none; color: var(--muted); cursor: pointer; font: inherit; }
+.dp-neu:hover { border-color: var(--accent); color: var(--accent); }
+
+/* Aufgaben und Dokumente */
+.lbl.warn { color: var(--bad); }
+.dok-kopf { width: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.dok-inhalt { border-left: 2px solid var(--accent); padding: 2px 0 2px 12px; margin: 6px 0; line-height: 1.5; }
+.dok-inhalt h3 { margin: 10px 0 4px; font-size: 1rem; color: var(--accent); }
+.dok-inhalt p { margin: 0 0 8px; }
+.dok-inhalt ul { margin: 0 0 8px; padding-left: 20px; }
+.dok-inhalt a, .item p a { color: var(--accent); overflow-wrap: anywhere; }
+.filters input[type="search"] { flex: 1 1 220px; }

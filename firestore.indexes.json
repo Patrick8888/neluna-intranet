@@ -7,6 +7,14 @@
         { "fieldPath": "standort", "order": "ASCENDING" },
         { "fieldPath": "datum", "order": "DESCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "dienste",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mitarbeiterUid", "order": "ASCENDING" },
+        { "fieldPath": "datum", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

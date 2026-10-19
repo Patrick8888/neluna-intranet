@@ -546,7 +546,7 @@ service cloud.firestore {
     match /push_einstellungen/{uid} {
       allow read: if aktiv() && request.auth.uid == uid;
       allow write: if aktiv() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['gruppen', 'direkt', 'mitteilungen', 'fahrten'])
+        && request.resource.data.keys().hasOnly(['gruppen', 'direkt', 'mitteilungen', 'fahrten', 'personal', 'aufgaben'])
         && request.resource.data.values().hasOnly([true, false]);
     }
 
@@ -567,6 +567,146 @@ service cloud.firestore {
             && request.resource.data.gelesen.diff(resource.data.gelesen).affectedKeys().hasOnly([request.auth.uid])
             && request.resource.data.gelesen[request.auth.uid] is string));
       allow delete: if eineVon(['geschaeftsfuehrung']);
+    }
+
+    // ---------- Personal: Dienstplan, Ferien und Abwesenheiten ----------
+
+    // Den Wochenplan schreibt die Leitung des Bereichs (Fahrdienst gehört zur Pension); spiegelt src/lib/personal.ts.
+    function dienstplanBearbeiten(b) {
+      return eineVon(['geschaeftsfuehrung'])
+        || (b == 'laden' && eineVon(['leitung_laden']))
+        || (b in ['pension', 'fahrdienst'] && eineVon(['leitung_pension']));
+    }
+
+    function uhrzeit(d, feld) {
+      return d[feld] is string && d[feld].matches('[0-2][0-9]:[0-5][0-9]');
+    }
+
+    match /dienste/{id} {
+      function gueltigerDienst(d) {
+        return d.keys().hasOnly(['datum', 'bereich', 'mitarbeiterUid', 'mitarbeiterName', 'von', 'bis', 'notiz', 'erstellt', 'person', 'uid'])
+          && datumOk(d, 'datum')
+          && d.bereich in ['laden', 'pension', 'fahrdienst']
+          && d.mitarbeiterUid is string && d.mitarbeiterUid.size() > 0 && d.mitarbeiterUid.size() <= 128
+          && d.mitarbeiterName is string && d.mitarbeiterName.size() <= 100
+          && uhrzeit(d, 'von') && uhrzeit(d, 'bis') && d.von < d.bis
+          && text(d, 'notiz', 300);
+      }
+      allow read: if teamLesen();
+      allow create: if dienstplanBearbeiten(request.resource.data.bereich) && vonMir() && gueltigerDienst(request.resource.data);
+      allow update: if dienstplanBearbeiten(resource.data.bereich) && dienstplanBearbeiten(request.resource.data.bereich)
+        && gueltigerDienst(request.resource.data) && unveraendert(['erstellt', 'person', 'uid']);
+      allow delete: if dienstplanBearbeiten(resource.data.bereich);
+    }
+
+    // Der Bereich passt zu den Rollen der Person: er bestimmt, wer freigibt.
+    function abwesenheitBereichOk(d) {
+      let r = get(/databases/$(database)/documents/benutzer/$(d.mitarbeiterUid)).data.rollen;
+      return (d.bereich == 'firma' && r.hasAny(['geschaeftsfuehrung']))
+        || (d.bereich == 'laden' && !r.hasAny(['geschaeftsfuehrung']) && r.hasAny(['leitung_laden', 'verkauf']))
+        || (d.bereich == 'pension' && !r.hasAny(['geschaeftsfuehrung']) && r.hasAny(['leitung_pension', 'mitarbeit_pension', 'fahrdienst']));
+    }
+
+    // Laden: Leitung Laden, Pension: Leitung Pension, alles: Geschäftsführung. Leitungen nie die eigenen.
+    function abwesenheitFreigeben(bereich, mitarbeiter) {
+      return eineVon(['geschaeftsfuehrung'])
+        || (mitarbeiter != request.auth.uid
+            && ((bereich == 'laden' && eineVon(['leitung_laden'])) || (bereich == 'pension' && eineVon(['leitung_pension']))));
+    }
+
+    match /abwesenheiten/{id} {
+      function gueltigeAbwesenheit(d) {
+        return d.keys().hasOnly(['mitarbeiterUid', 'mitarbeiterName', 'bereich', 'art', 'von', 'bis', 'notiz', 'status',
+            'entscheidUid', 'entscheidName', 'entscheidAm', 'antwort', 'erstellt', 'person', 'uid'])
+          && d.mitarbeiterUid is string && d.mitarbeiterUid.size() > 0 && d.mitarbeiterUid.size() <= 128
+          && d.mitarbeiterName is string && d.mitarbeiterName.size() <= 100
+          && d.bereich in ['laden', 'pension', 'firma']
+          && d.art in ['Ferien', 'Frei', 'Weiterbildung', 'Krank', 'Unfall', 'Militär/Zivilschutz', 'Anderes']
+          && datumOk(d, 'von') && datumOk(d, 'bis') && d.von <= d.bis
+          && d.status in ['Beantragt', 'Bewilligt', 'Abgelehnt']
+          && text(d, 'notiz', 1000) && text(d, 'antwort', 1000) && text(d, 'entscheidUid', 128)
+          && text(d, 'entscheidName', 100) && text(d, 'entscheidAm', 30);
+      }
+      allow read: if teamLesen();
+      // Für sich selbst beantragen; wer freigeben darf, trägt auch direkt ein (z. B. Krankheit).
+      allow create: if teamLesen() && vonMir() && gueltigeAbwesenheit(request.resource.data) && abwesenheitBereichOk(request.resource.data)
+        && ((request.resource.data.mitarbeiterUid == request.auth.uid && request.resource.data.status == 'Beantragt')
+            || abwesenheitFreigeben(request.resource.data.bereich, request.resource.data.mitarbeiterUid));
+      allow update: if gueltigeAbwesenheit(request.resource.data) && unveraendert(['erstellt', 'person', 'uid', 'mitarbeiterUid', 'bereich'])
+        && (abwesenheitFreigeben(resource.data.bereich, resource.data.mitarbeiterUid)
+            || (resource.data.mitarbeiterUid == request.auth.uid && teamLesen()
+                && resource.data.status == 'Beantragt' && request.resource.data.status == 'Beantragt'
+                && nurFelder(['art', 'von', 'bis', 'notiz'])));
+      // Offene Anträge zieht man selbst zurück; Entschiedenes löscht nur, wer freigibt.
+      allow delete: if abwesenheitFreigeben(resource.data.bereich, resource.data.mitarbeiterUid)
+        || (teamLesen() && resource.data.mitarbeiterUid == request.auth.uid && resource.data.status == 'Beantragt');
+    }
+
+    // ---------- Aufgaben ----------
+
+    match /aufgaben/{id} {
+      function gueltigeAufgabe(d) {
+        return d.keys().hasOnly(['titel', 'beschreibung', 'bereich', 'zustaendigUid', 'zustaendigName', 'faellig', 'wiederholung',
+            'erledigt', 'erledigtVon', 'erledigtAm', 'erstellt', 'person', 'uid'])
+          && d.titel is string && d.titel.size() > 0 && d.titel.size() <= 200
+          && d.bereich in ['Laden', 'Pension', 'Fahrdienst', 'Firma']
+          && (d.faellig == '' || datumOk(d, 'faellig'))
+          && d.wiederholung in ['', 't1', 'w1', 'w2', 'm1', 'm3', 'm6', 'm12']
+          && (d.wiederholung == '' || d.faellig != '')
+          && d.erledigt is bool
+          && text(d, 'beschreibung', 4000) && text(d, 'zustaendigUid', 128) && text(d, 'zustaendigName', 100)
+          && text(d, 'erledigtVon', 100) && text(d, 'erledigtAm', 30);
+      }
+      allow read: if teamLesen();
+      allow create: if teamLesen() && vonMir() && gueltigeAufgabe(request.resource.data);
+      // Ändern: wer sie erstellt hat, wer zuständig ist, die Geschäftsführung. Abhaken: alle
+      // (bei wiederkehrenden rückt dabei nur die Fälligkeit vor).
+      allow update: if teamLesen() && gueltigeAufgabe(request.resource.data) && unveraendert(['erstellt', 'person', 'uid'])
+        && (eineVon(['geschaeftsfuehrung'])
+            || resource.data.uid == request.auth.uid
+            || resource.data.zustaendigUid == request.auth.uid
+            || nurFelder(['erledigt', 'erledigtVon', 'erledigtAm'])
+            || (resource.data.wiederholung != '' && nurFelder(['faellig', 'erledigtVon', 'erledigtAm'])
+                && request.resource.data.faellig > resource.data.faellig));
+      allow delete: if eineVon(['geschaeftsfuehrung']) || (teamLesen() && resource.data.uid == request.auth.uid);
+    }
+
+    // ---------- Dokumente ----------
+
+    // Die Leitungen sehen alles (auch ungefilterte Listen), das übrige Team nur «alle».
+    function dokumentLesen(fuer) {
+      return sitzungSchreiben() || (teamLesen() && fuer == 'alle');
+    }
+
+    match /dokumente/{id} {
+      function gueltigesDokument(d) {
+        return d.keys().hasOnly(['titel', 'kategorie', 'inhalt', 'link', 'fuer', 'datei', 'erstellt', 'geaendert', 'person', 'uid'])
+          && d.titel is string && d.titel.size() > 0 && d.titel.size() <= 200
+          && d.kategorie in ['Organisationshandbuch', 'Reglemente', 'Anleitungen', 'Formulare', 'Anderes']
+          && d.fuer in ['alle', 'leitung']
+          && text(d, 'inhalt', 60000)
+          && d.link is string && d.link.size() <= 1000 && (d.link == '' || d.link.matches('https?://[^ ]+'))
+          && (!('datei' in d) || (d.datei is map
+              && d.datei.keys().hasOnly(['schluessel', 'name', 'typ', 'groesse', 'teile'])
+              && d.datei.schluessel is string && d.datei.schluessel.matches('[A-Za-z0-9]{1,40}')
+              && d.datei.name is string && d.datei.name.size() <= 200
+              && d.datei.typ is string && d.datei.typ.size() <= 100
+              && d.datei.groesse is int && d.datei.groesse > 0 && d.datei.groesse <= 5242880
+              && d.datei.teile is int && d.datei.teile >= 1 && d.datei.teile <= 12));
+      }
+      allow read: if dokumentLesen(resource.data.fuer);
+      allow create, update: if eineVon(['geschaeftsfuehrung']) && vonMir() && gueltigesDokument(request.resource.data);
+      allow delete: if eineVon(['geschaeftsfuehrung']);
+
+      // Dateiinhalt in Teilen («<schlüssel>_<nr>», Data-URL zerschnitten); lesen darf, wer das Dokument sieht.
+      match /teile/{teil} {
+        allow read: if dokumentLesen(get(/databases/$(database)/documents/dokumente/$(id)).data.fuer);
+        allow create, update: if eineVon(['geschaeftsfuehrung'])
+          && teil.matches('[A-Za-z0-9]{1,40}_[0-9]{1,2}')
+          && request.resource.data.keys().hasOnly(['daten'])
+          && request.resource.data.daten is string && request.resource.data.daten.size() <= 750000;
+        allow delete: if eineVon(['geschaeftsfuehrung']);
+      }
     }
 
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.

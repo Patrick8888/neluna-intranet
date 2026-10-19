@@ -1,5 +1,5 @@
 // Server-Funktionen: verschicken Push-Nachrichten, wenn im Chat geschrieben, eine Mitteilung veröffentlicht
-// oder eine Fahrt zugeteilt, verschoben oder abgesagt wird. Wer was bekommt, steht in src/lib/push.ts.
+// eine Fahrt zugeteilt, verschoben oder abgesagt, Ferien beantragt oder entschieden oder eine Aufgabe zugeteilt wird. Wer was bekommt, steht in src/lib/push.ts.
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
@@ -7,7 +7,7 @@ import { setGlobalOptions } from "firebase-functions/v2";
 import { onDocumentCreated, onDocumentWritten } from "firebase-functions/v2/firestore";
 import { logger } from "firebase-functions";
 import { heute } from "../../src/lib/format";
-import { chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt, type PushArt, type PushEinstellungen, type PushNachricht, type PushPerson } from "../../src/lib/push";
+import { abwesenheitPush, aufgabePush, chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt, type PushArt, type PushEinstellungen, type PushNachricht, type PushPerson } from "../../src/lib/push";
 
 // Gleiche Region wie die Datenbank (Zürich); wenige Instanzen reichen für das Team.
 setGlobalOptions({ region: "europe-west6", maxInstances: 3 });
@@ -63,4 +63,14 @@ export const mitteilungPushSenden = onDocumentCreated("mitteilungen/{id}", async
 export const fahrtPushSenden = onDocumentWritten("fahrten/{id}", async (event) => {
   const m = fahrtPush(event.params.id, event.data?.before.data(), event.data?.after.data(), heute());
   if (m) await senden([m.uid], "fahrten", m.nachricht);
+});
+
+export const abwesenheitPushSenden = onDocumentWritten("abwesenheiten/{id}", async (event) => {
+  const m = abwesenheitPush(event.data?.before.data(), event.data?.after.data(), await team());
+  if (m) await senden(m.uids, "personal", m.nachricht);
+});
+
+export const aufgabePushSenden = onDocumentWritten("aufgaben/{id}", async (event) => {
+  const m = aufgabePush(event.params.id, event.data?.before.data(), event.data?.after.data());
+  if (m) await senden([m.uid], "aufgaben", m.nachricht);
 });

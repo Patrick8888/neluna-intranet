@@ -14,6 +14,14 @@ const buchung = (id: string, w: Partial<Buchung> = {}): Buchung => ({
 });
 
 describe("Kalender", () => {
+  it("bewilligte Abwesenheiten auf der Ebene Personal", () => {
+    const e = kalenderEintraege({ ...leer, abwesenheiten: [{ id: "a", name: "Rahel Winet", art: "Ferien", von: "2026-10-30", bis: "2026-11-02" }] }, "2026-10-01", "2026-10-31");
+    expect(e.map((x) => [x.datum, x.titel, x.ebene, x.info])).toEqual([
+      ["2026-10-30", "Ferien Rahel Winet", "Personal", "30.10.–02.11."],
+      ["2026-10-31", "Ferien Rahel Winet", "Personal", "30.10.–02.11."],
+    ]);
+  });
+
   it("mehrtägige Termine erscheinen an jedem Tag im Zeitraum", () => {
     const e = kalenderEintraege({ ...leer, termine: [termin("ferien", { titel: "Ferien Rahel", ebene: "Personal", datum: "2026-10-18", bis: "2026-10-22" })] }, "2026-10-20", "2026-10-31");
     expect(e.map((x) => x.datum)).toEqual(["2026-10-20", "2026-10-21", "2026-10-22"]);

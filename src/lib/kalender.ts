@@ -45,6 +45,8 @@ export type Quellen = {
   fahrzeugTermine: FahrzeugTermin[];
   fahrzeuge: Fahrzeug[];
   sitzungen: Sitzung[];
+  /** Bewilligte Abwesenheiten; «art» ist schon so, wie die Person sie sehen darf. */
+  abwesenheiten?: { id: string; name: string; art: string; von: string; bis: string }[];
 };
 
 const imZeitraum = (d: string, von: string, bis: string) => von <= d && d <= bis;
@@ -94,6 +96,15 @@ export function kalenderEintraege(q: Quellen, von: string, bis: string): Eintrag
   for (const s of q.sitzungen) {
     if (!imZeitraum(s.datum, von, bis)) continue;
     liste.push({ schluessel: `s-${s.id}`, datum: s.datum, zeit: s.zeit, titel: s.art, info: s.ort, ebene: "Sitzungen", link: "/sitzungen" });
+  }
+
+  for (const a of q.abwesenheiten ?? []) {
+    for (let tag = a.von < von ? von : a.von; tag <= a.bis && tag <= bis; tag = plusTage(tag, 1)) {
+      liste.push({
+        schluessel: `p-${a.id}-${tag}`, datum: tag, zeit: "", titel: `${a.art} ${a.name}`, ebene: "Personal", link: "/personal/abwesenheiten",
+        info: a.bis > a.von ? `${a.von.slice(8)}.${a.von.slice(5, 7)}.–${a.bis.slice(8)}.${a.bis.slice(5, 7)}.` : "",
+      });
+    }
   }
 
   return liste.sort((a, b) => a.datum.localeCompare(b.datum) || a.zeit.localeCompare(b.zeit) || a.titel.localeCompare(b.titel, "de"));

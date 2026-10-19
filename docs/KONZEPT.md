@@ -83,14 +83,14 @@ Die sieben Bereiche des Ladenbuchs werden 1:1 übernommen: Kassenbuch (Tagesabsc
 
 ### 3.7 Personal
 - **Profile:** Foto, Funktion, Pensum, Kontakt, Rollen.
-- **Dienstplan:** Wochenplan je Bereich (Laden, Pension, Fahrdienst).
-- **Ferien und Abwesenheiten:** Antrag → Freigabe (Laden: Morena mit Rücksprache Nel; Pension: Cristina), erscheint im Kalender.
+- **Dienstplan:** Wochenplan je Bereich (Laden, Pension, Fahrdienst): Personen als Zeilen, Dienste mit Beginn, Ende und Notiz, Stunden pro Person und Woche, «Vorwoche übernehmen». Den Laden plant die Leitung Laden, Pension und Fahrdienst die Leitung Pension, die Geschäftsführung alles. Alle sehen die Pläne und unter «Meine Dienste» die eigenen; der Dienst des Tages steht auf der Startseite.
+- **Ferien und Abwesenheiten:** Antrag → Freigabe (Laden: Morena mit Rücksprache Nel; Pension und Fahrdienst: Cristina; Geschäftsführung untereinander; Leitungen nie die eigenen), erscheint bewilligt im Kalender und im Dienstplan. Wer freigibt, trägt auch direkt ein (z. B. Krankheit). Krankheit und Unfall sehen nur die Person selbst und wer freigibt; alle anderen sehen «Abwesend». Ferientage werden Montag bis Freitag gezählt.
 
 ### 3.8 Aufgaben und Pendenzen
-Einfache Aufgabenliste mit Verantwortlicher Person, Fälligkeit und Bereich; wiederkehrende Aufgaben (z. B. Reinigungsplan, Inventur, Impfausweise prüfen).
+Einfache Aufgabenliste mit verantwortlicher Person (oder «wer gerade Zeit hat»), Fälligkeit und Bereich; wiederkehrende Aufgaben (täglich bis jährlich, z. B. Reinigungsplan, Inventur, Impfausweise prüfen) rücken beim Abhaken auf den nächsten Termin vor. Alle erfassen und haken ab; ändern dürfen Ersteller/in, Zuständige und Geschäftsführung. Eigene fällige Aufgaben stehen auf der Startseite und als Zähler in der Navigation.
 
 ### 3.9 Dokumente und Mitteilungen
-Ablage für Organisationshandbuch, Personalreglement, Anleitungen, Formulare (Phase 5). Mitteilungen der Geschäftsführung mit «Gelesen»-Bestätigung (Phase 4): neue Mitteilungen stehen oben auf der Startseite, bis man sie bestätigt; die Geschäftsführung sieht, wer noch nicht gelesen hat.
+Ablage für Organisationshandbuch, Personalreglement, Anleitungen, Formulare (Phase 5): je Dokument Text (mit einfacher Formatierung), Link und/oder eine Datei bis 5 MB (liegt in Teilen in der Datenbank, ohne Cloud Storage); sichtbar fürs ganze Team oder nur für Geschäftsführung und Leitungen; mit Suche. Die Geschäftsführung legt ab, alle lesen. Mitteilungen der Geschäftsführung mit «Gelesen»-Bestätigung (Phase 4): neue Mitteilungen stehen oben auf der Startseite, bis man sie bestätigt; die Geschäftsführung sieht, wer noch nicht gelesen hat.
 
 ## 4. Datenmodell (Skizze)
 
