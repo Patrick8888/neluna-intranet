@@ -154,11 +154,11 @@ tr.click:hover td { background: var(--accent-soft); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); background: var(--accent); color: var(--accent-ink); padding: 11px 18px; border-radius: 999px; font-weight: 700; font-size: 0.9rem; z-index: 20; }
 
 /* Pension: Belegungsplan */
-.plan { min-width: 760px; display: grid; }
-.plan-zeile { display: grid; grid-template-columns: 96px 1fr; border-bottom: 1px solid var(--line); min-height: 44px; }
+.plan { min-width: 820px; display: grid; }
+.plan-zeile { display: grid; grid-template-columns: 150px minmax(0, 1fr); border-bottom: 1px solid var(--line); min-height: 44px; }
 .plan-zeile:last-child { border-bottom: 0; }
 .plan-zeile.kopf { background: var(--sunk); }
-.plan-name { display: grid; align-content: center; gap: 1px; padding: 6px 10px; border-right: 1px solid var(--line); font-size: 0.85rem; }
+.plan-name { display: grid; align-content: center; gap: 1px; min-width: 0; padding: 6px 10px; overflow-wrap: anywhere; hyphens: auto; line-height: 1.25; border-right: 1px solid var(--line); font-size: 0.85rem; }
 .plan-name span { font-size: 0.72rem; color: var(--muted); }
 .plan-spur { display: grid; grid-auto-rows: 30px; gap: 4px 0; padding: 6px 0; align-content: start; }
 .plan-zeile.kopf .plan-spur { padding: 0; }
