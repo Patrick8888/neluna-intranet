@@ -72,3 +72,12 @@ export function chf(n: unknown): string {
 }
 
 export const vorname = (name?: string | null) => (name ?? "").split(" ")[0];
+
+/** «Vorname Nachname» aus den beiden Feldern. */
+export const vollerName = (vorname: string, nachname: string) => [vorname.trim(), nachname.trim()].filter(Boolean).join(" ");
+
+/** Ältere Einträge haben nur «Vorname Nachname» in einem Feld: erstes Wort ist der Vorname. */
+export function namensTeile(name: string): { vorname: string; nachname: string } {
+  const [v = "", ...rest] = name.trim().split(/\s+/);
+  return { vorname: v, nachname: rest.join(" ") };
+}

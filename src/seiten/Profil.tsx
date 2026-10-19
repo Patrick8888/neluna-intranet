@@ -4,6 +4,7 @@ import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { useIch } from "../auth";
 import { meldung } from "../lib/fehler";
+import { vollerName } from "../lib/format";
 import { passwortFehler } from "../lib/passwort";
 import { ROLLEN } from "../lib/rollen";
 import { PushEinstellungenPanel } from "../chat/Push";
@@ -18,15 +19,16 @@ function Meldung({ z }: { z: Zustand }) {
 
 function ProfilFormular() {
   const ich = useIch();
-  const [name, setName] = useState(ich.name);
+  const [nachname, setNachname] = useState(ich.nachname);
+  const [vorname, setVorname] = useState(ich.vorname);
   const [telefon, setTelefon] = useState(ich.telefon ?? "");
   const [z, setZ] = useState<Zustand>({});
 
   async function speichern(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim()) return setZ({ fehler: "Bitte einen Namen angeben." });
+    if (!vorname.trim() || !nachname.trim()) return setZ({ fehler: "Bitte Name und Vorname angeben." });
     try {
-      await updateDoc(doc(db, "benutzer", ich.uid), { name: name.trim(), telefon: telefon.trim() || null, geaendertAm: serverTimestamp() });
+      await updateDoc(doc(db, "benutzer", ich.uid), { name: vollerName(vorname, nachname), vorname: vorname.trim(), nachname: nachname.trim(), telefon: telefon.trim() || null, geaendertAm: serverTimestamp() });
       setZ({ ok: "Profil gespeichert." });
     } catch (err) {
       setZ({ fehler: meldung(err) });
@@ -38,8 +40,9 @@ function ProfilFormular() {
       <h2>Profil</h2>
       <Meldung z={z} />
       <div className="grid">
-        <label>Name<input value={name} onChange={(e) => setName(e.target.value)} required autoComplete="name" /></label>
-        <label>Telefon<input type="tel" value={telefon} onChange={(e) => setTelefon(e.target.value)} autoComplete="tel" /></label>
+        <label>Name<input value={nachname} onChange={(e) => setNachname(e.target.value)} required autoComplete="family-name" /></label>
+        <label>Vorname<input value={vorname} onChange={(e) => setVorname(e.target.value)} required autoComplete="given-name" /></label>
+        <label>Telefonnummer<input type="tel" value={telefon} onChange={(e) => setTelefon(e.target.value)} autoComplete="tel" /></label>
       </div>
       <div className="actions"><button className="btn">Speichern</button></div>
     </form>

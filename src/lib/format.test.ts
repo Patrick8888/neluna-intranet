@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chf, datum, heute, kalenderwoche, montagVon, plusTage, stunde, wochenLabel, zahl, zeitstempel } from "./format";
+import { chf, datum, heute, kalenderwoche, montagVon, namensTeile, plusTage, vollerName, stunde, wochenLabel, zahl, zeitstempel } from "./format";
 
 describe("Datum", () => {
   it("heute gilt in Zürich, auch kurz nach Mitternacht", () => {
@@ -30,5 +30,13 @@ describe("Beträge", () => {
   it("formatiert mit zwei Stellen", () => {
     expect(chf(1234.5)).toMatch(/^1.234\.50$/);
     expect(chf(undefined)).toBe("0.00");
+  });
+});
+
+describe("Namen", () => {
+  it("setzt Vorname und Name zusammen und teilt alte Einträge auf", () => {
+    expect(vollerName(" Rahel ", "Winet")).toBe("Rahel Winet");
+    expect(namensTeile("Cristina de Oliveira")).toEqual({ vorname: "Cristina", nachname: "de Oliveira" });
+    expect(namensTeile("Patrick")).toEqual({ vorname: "Patrick", nachname: "" });
   });
 });

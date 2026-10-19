@@ -38,7 +38,8 @@ service cloud.firestore {
     }
 
     function gueltigerBenutzer(d) {
-      return d.keys().hasOnly(['name', 'email', 'funktion', 'pensum', 'telefon', 'rollen', 'aktiv', 'erstelltAm', 'geaendertAm'])
+      return d.keys().hasOnly(['name', 'vorname', 'nachname', 'email', 'funktion', 'pensum', 'telefon', 'rollen', 'aktiv', 'erstelltAm', 'geaendertAm'])
+        && text(d, 'vorname', 60) && text(d, 'nachname', 60)
         && d.keys().hasAll(['name', 'email', 'rollen', 'aktiv'])
         && d.name is string && d.name.size() > 0 && d.name.size() <= 100
         && d.email is string && d.email.size() <= 200
@@ -66,7 +67,7 @@ service cloud.firestore {
       );
 
       // Admin ändert alles, kann sich aber nicht selbst aussperren.
-      // Jede Person ändert bei sich nur Name und Telefon.
+      // Jede Person ändert bei sich nur Name, Vorname und Telefon.
       allow update: if gueltigerBenutzer(request.resource.data) && (
         (istAdmin()
           && request.resource.data.email == resource.data.email
@@ -74,7 +75,7 @@ service cloud.firestore {
               || (request.resource.data.aktiv == true && request.resource.data.rollen.hasAny(['admin']))))
         || (aktiv()
           && request.auth.uid == uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'telefon', 'geaendertAm']))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'vorname', 'nachname', 'telefon', 'geaendertAm']))
       );
 
       // Niemand wird gelöscht, nur deaktiviert (Nachvollziehbarkeit).
