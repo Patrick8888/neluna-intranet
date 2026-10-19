@@ -12,6 +12,7 @@ import { darf, STUFE } from "../lib/rollen";
 import { LoeschKnopf, speichern, useAngezeigt, useToast } from "../ui";
 import { statusFarbe } from "./BuchungKarte";
 import { usePension } from "./daten";
+import { LinkSenden, StammblattEingang } from "./StammblattLinks";
 
 const KUNDE_FELDER = [
   ["nachname", "Name", "z. B. Meier"],
@@ -209,6 +210,11 @@ function KundeDetail({ kundeId, darfBearbeiten }: { kundeId: string; darfBearbei
           <button type="button" className="btn ghost small" onClick={() => setParams({})}>Schliessen</button>
         </div>
       </div>
+      {kunde && darfBearbeiten && !kunde.team && (
+        <div className="notice">
+          Die Kundschaft kann ihr Stammblatt auch selbst ergänzen: <LinkSenden kunde={kunde} hunde={hunde} zeigen={zeigen} />
+        </div>
+      )}
       <KundeFormular key={kundeId} vorhanden={kunde} darfBearbeiten={darfBearbeiten} zeigen={zeigen} neuAngelegt={(id) => setParams({ kunde: id, hund: "neu" })} />
       {kunde && (
         <>
@@ -312,12 +318,14 @@ export function Kartei() {
   return (
     <>
       {verwalten && <TeamhundeAnlegen zeigen={zeigen} />}
+      {darfBearbeiten && <StammblattEingang zeigen={zeigen} />}
       {offen && <KundeDetail key={offen} kundeId={offen} darfBearbeiten={darfBearbeiten} />}
       <section className="panel" aria-labelledby="h-ka">
         <div className="panel-head">
           <h2 id="h-ka">Kartei</h2>
           {darfBearbeiten && <button type="button" className="btn small" onClick={() => { setParams({ kunde: "neu" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Neue Kundin / neuer Kunde</button>}
         </div>
+        {darfBearbeiten && <div className="actions"><LinkSenden zeigen={zeigen} /></div>}
         <div className="filters">
           <button type="button" className="chip" aria-pressed={ansicht === "hunde"} onClick={() => setAnsicht("hunde")}>Hunde ({d.hunde.length})</button>
           <button type="button" className="chip" aria-pressed={ansicht === "kunden"} onClick={() => setAnsicht("kunden")}>Kundschaft ({d.kunden.length})</button>

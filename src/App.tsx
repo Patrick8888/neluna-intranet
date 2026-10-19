@@ -19,6 +19,7 @@ import { Heute } from "./pension/Heute";
 import { Kartei } from "./pension/Kartei";
 import { Abrechnung } from "./pension/Abrechnung";
 import { Stammblatt } from "./pension/Stammblatt";
+import { StammblattFormular } from "./pension/StammblattFormular";
 import { HundSeite } from "./pension/HundSeite";
 import { Zimmer } from "./pension/Zimmer";
 import { PensionKasse } from "./pension/Kasse";
@@ -51,6 +52,9 @@ function Inhalt() {
   const { pathname } = useLocation();
   // Die Einrichtung meldet sich selbst an; sie muss sichtbar bleiben, bis sie fertig ist.
   if (pathname === "/einrichtung" && z.status !== "angemeldet") return <Einrichtung />;
+  // Das Stammblatt per Link ist für die Kundschaft, ohne Anmeldung.
+  const link = /^\/stammblatt\/([A-Za-z0-9]{20,40})\/?$/.exec(pathname);
+  if (link) return <StammblattFormular token={link[1]} />;
   if (z.status === "laedt") return <div className="wrap login"><main><p className="hint" style={{ textAlign: "center" }}>Lädt …</p></main></div>;
   if (z.status === "abgemeldet") {
     return (
