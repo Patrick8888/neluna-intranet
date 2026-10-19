@@ -36,11 +36,23 @@ body {
 a { color: var(--accent); }
 
 .wrap {
-  max-width: 1040px;
+  max-width: 1600px;
   margin: 0 auto;
   border: 3px solid var(--frame);
   border-radius: 32px;
   padding: 0 20px 24px;
+}
+/* Am Computer: Seite nutzt die Breite, Schrift etwas grösser; das Handy bleibt wie es ist. */
+@media (min-width: 1100px) {
+  html { font-size: 17px; }
+  body { font-size: 16px; padding-inline: 24px; }
+  .wrap { padding: 0 32px 32px; }
+  .kopf .logos .logo { width: 210px; }
+  .kopf .logos .logo-nel { width: 108px; }
+}
+@media (min-width: 1700px) {
+  html { font-size: 18px; }
+  body { font-size: 17px; }
 }
 @media (max-width: 520px) {
   body { padding-inline: 8px; }
