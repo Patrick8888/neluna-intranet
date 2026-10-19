@@ -746,6 +746,75 @@ service cloud.firestore {
       }
     }
 
+    // ---------- Stammblatt per Link ----------
+    // Die Kundschaft füllt ohne Anmeldung aus; der Schlüssel (Dokument-ID) ist zufällig und läuft nach 14 Tagen ab.
+
+    function linkPfad(token) {
+      return /databases/$(database)/documents/stammblatt_links/$(token);
+    }
+
+    function linkOffen(l) {
+      return l.status == 'offen' && l.ablauf > request.time;
+    }
+
+    match /stammblatt_links/{token} {
+      allow get: if linkOffen(resource.data) || pensionLesen();
+      allow list: if pensionLesen();
+      allow create: if pensionBearbeiten() && vonMir() && token.size() >= 20 && token.size() <= 40
+        && request.resource.data.keys().hasOnly(['kundeId', 'kundeName', 'vorlage', 'ablauf', 'status', 'erstellt', 'person', 'uid'])
+        && request.resource.data.kundeId is string && request.resource.data.kundeId.size() <= 40
+        && request.resource.data.kundeName is string && request.resource.data.kundeName.size() <= 120
+        && (request.resource.data.vorlage == null || request.resource.data.vorlage is map)
+        && request.resource.data.ablauf is timestamp && request.resource.data.ablauf > request.time
+        && request.resource.data.ablauf < request.time + duration.value(31, 'd')
+        && request.resource.data.status == 'offen';
+      // Nach dem Absenden schliesst die Kundschaft den Link selbst; das Team darf ihn verlängern oder schliessen.
+      allow update: if (resource.data.status == 'offen' && request.resource.data.status == 'ausgefuellt'
+          && nurFelder(['status']) && existsAfter(/databases/$(database)/documents/stammblatt_antworten/$(token)))
+        || (pensionBearbeiten() && nurFelder(['status', 'ablauf']) && request.resource.data.status in ['offen', 'ausgefuellt']
+          && request.resource.data.ablauf is timestamp);
+      allow delete: if pensionBearbeiten();
+    }
+
+    // Die Textlängen kürzt die App bei der Übernahme (bereinigen); hier zählt, dass nur bekannte Felder kommen.
+    // Gilt auch für die Halter/in unten: nur die Pflichtfelder werden genau geprüft.
+    // Mehr Prüfungen pro Hund sprengen die Grenze von 1000 Ausdrücken pro Anfrage.
+    function hundOk(h) {
+      return h is map
+        && h.keys().hasOnly(['id', 'name', 'rasse', 'geburtsdatum', 'geschlecht', 'chipnummer', 'farbe', 'gewicht', 'laeufigkeit',
+          'tierarzt', 'tierarztTelefon', 'allergien', 'gesundheit', 'medikamente', 'futter', 'menge', 'fuetterungszeiten', 'leckerli',
+          'verhalten', 'sozialverhalten', 'freilauf', 'schlafplatz', 'kommandos', 'aengste', 'spielverhalten', 'notiz',
+          'kastriert', 'vertraeglich', 'impfungen'])
+        && h.name is string && h.name.size() > 0 && h.name.size() <= 80
+        && (!('kastriert' in h) || h.kastriert is bool) && (!('vertraeglich' in h) || h.vertraeglich is bool)
+        && (!('impfungen' in h) || (h.impfungen is list && h.impfungen.size() <= 10));
+    }
+
+    function hundeOk(l) {
+      return l is list && l.size() >= 1 && l.size() <= 6
+        && hundOk(l[0]) && (l.size() < 2 || hundOk(l[1])) && (l.size() < 3 || hundOk(l[2]))
+        && (l.size() < 4 || hundOk(l[3])) && (l.size() < 5 || hundOk(l[4])) && (l.size() < 6 || hundOk(l[5]));
+    }
+
+    function kundeOk(k) {
+      return k is map
+        && k.keys().hasOnly(['nachname', 'vorname', 'adresse', 'plzOrt', 'geburtsdatum', 'telefon', 'email', 'telefon2',
+          'notfallkontakt', 'notfallkontakt2', 'versicherung', 'notiz'])
+        && k.nachname is string && k.nachname.size() > 0 && k.nachname.size() <= 80
+        && k.vorname is string && k.vorname.size() > 0 && k.vorname.size() <= 80
+        && k.telefon is string && k.telefon.size() > 0 && k.telefon.size() <= 40;
+    }
+
+    match /stammblatt_antworten/{token} {
+      // Nur zusammen mit dem Schliessen des Links (siehe oben), damit jeder Link genau einmal gilt.
+      allow create: if exists(linkPfad(token)) && linkOffen(get(linkPfad(token)).data)
+        && getAfter(linkPfad(token)).data.status == 'ausgefuellt'
+        && request.resource.data.keys().hasOnly(['kunde', 'hunde', 'eingegangen'])
+        && request.resource.data.eingegangen == request.time
+        && kundeOk(request.resource.data.kunde) && hundeOk(request.resource.data.hunde);
+      allow read, delete: if pensionBearbeiten();
+    }
+
     // Alles andere ist gesperrt, bis ein Modul eigene Regeln bekommt.
     match /{pfad=**} {
       allow read, write: if false;

@@ -135,6 +135,8 @@ details summary { cursor: pointer; font-weight: 600; color: var(--muted); }
 .login .logos { justify-content: center; margin: 8px auto 4px; }
 .login .logo { width: min(220px, 52vw); }
 .login .logo-nel { width: min(112px, 27vw); }
+.login.stammblatt-formular { max-width: 820px; margin-top: 3vh; }
+.stammblatt-formular form { display: grid; gap: 16px; }
 
 /* Laden und Sitzungen */
 .btn.danger.armed { background: var(--bad); border-color: var(--bad); color: var(--accent-ink); }
@@ -364,3 +366,10 @@ a.pill { text-decoration: none; }
 .stempel-pause input { width: 80px; }
 table.zeiten th, table.zeiten td { text-align: left; white-space: normal; }
 table.zeiten td .pill { margin-left: 6px; text-transform: none; letter-spacing: 0; }
+
+/* Stammblatt per Link */
+.stammblatt-teilen { display: grid; gap: 8px; margin-top: 8px; }
+.stammblatt-angaben { display: grid; gap: 4px; margin: 4px 0 0; }
+.stammblatt-angaben > div { display: grid; grid-template-columns: minmax(120px, 34%) 1fr; gap: 8px; }
+.stammblatt-angaben dt { color: var(--muted); }
+.stammblatt-angaben dd { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
