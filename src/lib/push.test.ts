@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { abwesenheitPush, aufgabePush, chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt } from "./push";
+import { abwesenheitPush, aufgabePush, chatEmpfaenger, chatPush, fahrtPush, mitteilungEmpfaenger, pushErlaubt, vortagPush } from "./push";
 
 const team = [
   { uid: "patrick", rollen: ["admin", "geschaeftsfuehrung"] },
@@ -80,5 +80,41 @@ describe("Push für Personal und Aufgaben", () => {
     expect(aufgabePush("x", a, { ...a, faellig: "2026-11-01" })).toBeNull();
     expect(aufgabePush("x", undefined, { ...a, zustaendigUid: "morena" })).toBeNull();
     expect(aufgabePush("x", undefined, { ...a, zustaendigUid: "" })).toBeNull();
+  });
+});
+
+describe("Erinnerung am Vortag", () => {
+  const morgen = "2026-10-21";
+  const hunde = [
+    { id: "h1", name: "Rex", impfungen: [{ art: "Tollwut", gueltigBis: "2026-10-22" }] },
+    { id: "h2", name: "Bella", impfungen: [{ art: "Tollwut", gueltigBis: "2028-01-01" }] },
+  ];
+  const buchungen = [
+    { hunde: [{ id: "h1", name: "Rex" }], von: morgen, bis: "2026-10-25", status: "Bestätigt" },
+    { hunde: [{ id: "h2", name: "Bella" }], von: "2026-10-18", bis: morgen, status: "Eingecheckt" },
+    { hunde: [{ id: "h3", name: "Bello" }], von: morgen, bis: "2026-10-23", status: "Anfrage" },
+    { hunde: [{ id: "h4", name: "Luna" }], von: morgen, bis: "2026-10-23", status: "Storniert" },
+  ];
+  const fahrten = [
+    { datum: morgen, zeit: "17:00", richtung: "Rückweg", fahrerUid: "laura", hunde: [{ name: "Bella" }], status: "Geplant" },
+    { datum: morgen, zeit: "08:00", richtung: "Hinweg", fahrerUid: "laura", hunde: [{ name: "Rex" }], status: "Geplant" },
+    { datum: morgen, zeit: "09:00", richtung: "Hinweg", fahrerUid: "", hunde: [{ name: "Bello" }], status: "Geplant" },
+    { datum: morgen, zeit: "10:00", richtung: "Hinweg", fahrerUid: "laura", hunde: [{ name: "Luna" }], status: "Abgesagt" },
+  ];
+
+  it("Pensionsteam: Ankünfte, Abholungen, Anfragen, Impfungen und Fahrten ohne Fahrer/in", () => {
+    const [p] = vortagPush(morgen, buchungen, hunde, fahrten, team);
+    expect(p.uids).toEqual(["patrick", "cristina"]);
+    expect(p.nachricht.titel).toBe("Morgen in der Pension (Mi 21.10.2026)");
+    expect(p.nachricht.text).toBe("Ankunft: Rex · Abholung: Bella · Noch nicht bestätigt: Bello · Impfung prüfen: Rex: Tollwut läuft ab am 22.10.2026 · Ohne Fahrer/in: 09:00 Abholen Bello");
+  });
+
+  it("Fahrerin bekommt ihre eigenen Fahrten in zeitlicher Reihenfolge", () => {
+    const f = vortagPush(morgen, buchungen, hunde, fahrten, team)[1];
+    expect(f).toEqual({ uids: ["laura"], nachricht: { titel: "Morgen 2 Fahrten (Mi 21.10.2026)", text: "08:00 Abholen Rex · 17:00 Nach Hause Bella", link: "/fahrdienst/heute", tag: `vortag_fahrten_${morgen}` } });
+  });
+
+  it("nichts, wenn morgen nichts ansteht", () => {
+    expect(vortagPush("2026-12-24", buchungen, hunde, fahrten, team)).toEqual([]);
   });
 });

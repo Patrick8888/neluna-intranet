@@ -132,6 +132,7 @@ describe("Push", () => {
 
   it("Einstellungen nur für sich, nur Ja/Nein", async () => {
     await assertSucceeds(setDoc(doc(als("laura"), "push_einstellungen/laura"), { gruppen: false }, { merge: true }));
+    await assertSucceeds(setDoc(doc(als("laura"), "push_einstellungen/laura"), { erinnerungen: false }, { merge: true }));
     await assertFails(setDoc(doc(als("laura"), "push_einstellungen/laura"), { gruppen: "aus" }));
     await assertFails(setDoc(doc(als("laura"), "push_einstellungen/laura"), { spam: true }));
     await assertFails(getDoc(doc(als("sina"), "push_einstellungen/laura")));

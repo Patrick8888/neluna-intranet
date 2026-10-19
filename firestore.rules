@@ -551,7 +551,7 @@ service cloud.firestore {
     match /push_einstellungen/{uid} {
       allow read: if aktiv() && request.auth.uid == uid;
       allow write: if aktiv() && request.auth.uid == uid
-        && request.resource.data.keys().hasOnly(['gruppen', 'direkt', 'mitteilungen', 'fahrten', 'personal', 'aufgaben'])
+        && request.resource.data.keys().hasOnly(['gruppen', 'direkt', 'mitteilungen', 'fahrten', 'personal', 'aufgaben', 'erinnerungen'])
         && request.resource.data.values().hasOnly([true, false]);
     }
 

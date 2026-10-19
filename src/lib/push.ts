@@ -1,6 +1,7 @@
 // Wer bekommt welche Push-Nachricht? Reine Logik, die App und Server-Funktion teilen.
 import { dmPartner, GRUPPEN } from "./chat";
-import { datum } from "./format";
+import { datum, wochentagKurz } from "./format";
+import { impfWarnungen, type Hund } from "./pension";
 import { darfFreigeben, werktage, type Abwesenheit } from "./personal";
 import type { Rolle } from "./rollen";
 
@@ -12,6 +13,7 @@ export const PUSH_ARTEN = {
   fahrten: "Eigene Fahrten (neu, geändert, abgesagt)",
   personal: "Ferienanträge und Entscheide",
   aufgaben: "Neue Aufgaben für dich",
+  erinnerungen: "Erinnerung am Vortag (Ankünfte, Abholungen, Fahrten)",
 } as const;
 
 export type PushArt = keyof typeof PUSH_ARTEN;
@@ -97,4 +99,55 @@ export function aufgabePush(id: string, vorher: AufgabeDaten | undefined, nachhe
   if (!nachher?.zustaendigUid || nachher.erledigt || vorher?.zustaendigUid === nachher.zustaendigUid || nachher.zustaendigUid === nachher.uid) return null;
   const text = [nachher.faellig ? `fällig ${datum(nachher.faellig)}` : "", nachher.person ? `von ${nachher.person}` : ""].filter(Boolean).join(" · ");
   return { uid: nachher.zustaendigUid, nachricht: { titel: `Aufgabe: ${nachher.titel ?? ""}`, text, link: "/aufgaben", tag: `aufgabe_${id}` } };
+}
+
+type BuchungDaten = { hunde?: { id: string; name: string }[]; von?: string; bis?: string; status?: string };
+type FahrtTermin = { datum?: string; zeit?: string; status?: string; richtung?: string; fahrerUid?: string; kundeName?: string; hunde?: { name: string }[] };
+
+/** Wer in der Pension die Erinnerung am Vortag bekommt. */
+const PENSION = ["geschaeftsfuehrung", "leitung_pension", "mitarbeit_pension"];
+
+const namen = (b: BuchungDaten[]) => b.flatMap((x) => (x.hunde ?? []).map((h) => h.name)).join(", ");
+const kurzText = (teile: string[]) => {
+  const t = teile.filter(Boolean).join(" · ");
+  return t.length > 300 ? `${t.slice(0, 299)}…` : t;
+};
+const fahrtText = (f: FahrtTermin) =>
+  `${f.zeit ? `${f.zeit} ` : ""}${f.richtung === "Rückweg" ? "Nach Hause" : "Abholen"} ${(f.hunde ?? []).map((h) => h.name).join(", ") || f.kundeName || ""}`.trim();
+
+/**
+ * Erinnerung am Vorabend: das Pensionsteam erfährt, wer morgen kommt und geht, welche Impfungen
+ * zu prüfen und welche Fahrten noch ohne Fahrer/in sind; jede Fahrerin und jeder Fahrer die eigenen Fahrten.
+ * Nichts, wenn morgen nichts ansteht.
+ */
+export function vortagPush(morgen: string, buchungen: BuchungDaten[], hunde: Pick<Hund, "id" | "name" | "impfungen">[], fahrten: FahrtTermin[], team: PushPerson[]): { uids: string[]; nachricht: PushNachricht }[] {
+  const fest = (b: BuchungDaten) => b.status === "Bestätigt" || b.status === "Eingecheckt";
+  const kommen = buchungen.filter((b) => b.von === morgen && fest(b));
+  const anfragen = buchungen.filter((b) => b.von === morgen && b.status === "Anfrage");
+  const gehen = buchungen.filter((b) => b.bis === morgen && fest(b));
+  const impfen = kommen.flatMap((b) => (b.hunde ?? []).flatMap((x) => {
+    const h = hunde.find((y) => y.id === x.id);
+    return h ? impfWarnungen({ ...h, impfungen: h.impfungen ?? [] } as Hund, b.bis ?? morgen, morgen) : [];
+  }));
+  const geplant = fahrten.filter((f) => f.datum === morgen && f.status !== "Abgesagt" && f.status !== "Erledigt").sort((a, b) => (a.zeit ?? "").localeCompare(b.zeit ?? ""));
+  const ohneFahrer = geplant.filter((f) => !f.fahrerUid);
+  const wann = `${wochentagKurz(morgen)} ${datum(morgen)}`;
+  const aus: { uids: string[]; nachricht: PushNachricht }[] = [];
+
+  const text = kurzText([
+    kommen.length ? `Ankunft: ${namen(kommen)}` : "",
+    gehen.length ? `Abholung: ${namen(gehen)}` : "",
+    anfragen.length ? `Noch nicht bestätigt: ${namen(anfragen)}` : "",
+    impfen.length ? `Impfung prüfen: ${impfen.join(", ")}` : "",
+    ohneFahrer.length ? `Ohne Fahrer/in: ${ohneFahrer.map(fahrtText).join(", ")}` : "",
+  ]);
+  const pension = team.filter((p) => p.rollen.some((r) => PENSION.includes(r))).map((p) => p.uid);
+  if (text && pension.length) aus.push({ uids: pension, nachricht: { titel: `Morgen in der Pension (${wann})`, text, link: "/pension/belegung", tag: `vortag_pension_${morgen}` } });
+
+  for (const uid of [...new Set(geplant.map((f) => f.fahrerUid).filter((u): u is string => !!u))]) {
+    if (!team.some((p) => p.uid === uid)) continue;
+    const eigene = geplant.filter((f) => f.fahrerUid === uid);
+    aus.push({ uids: [uid], nachricht: { titel: `Morgen ${eigene.length === 1 ? "1 Fahrt" : `${eigene.length} Fahrten`} (${wann})`, text: kurzText(eigene.map(fahrtText)), link: "/fahrdienst/heute", tag: `vortag_fahrten_${morgen}` } });
+  }
+  return aus;
 }
