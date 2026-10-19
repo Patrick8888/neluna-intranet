@@ -33,6 +33,7 @@ export const MODULE = {
   fahrdienst: "Fahrdienst",
   fahrzeuge: "Fahrzeuge und Unterhalt",
   personal: "Personal",
+  zeiterfassung: "Zeiterfassung",
   aufgaben: "Aufgaben",
   dokumente: "Dokumente",
   admin: "Verwaltung",
@@ -50,32 +51,32 @@ const MATRIX: Record<Exclude<Rolle, "admin">, Record<Modul, Stufe>> = {
   geschaeftsfuehrung: {
     start: V, kalender: V, chat: V, laden: V, laden_wochenbericht: V,
     sitzungen_team: V, sitzungen_kader: V, pension: V, pension_kasse: V, tagesplan: V,
-    fahrdienst: V, fahrzeuge: V, personal: V, aufgaben: V, dokumente: V, admin: K,
+    fahrdienst: V, fahrzeuge: V, personal: V, zeiterfassung: V, aufgaben: V, dokumente: V, admin: K,
   },
   leitung_pension: {
     start: B, kalender: B, chat: B, laden: K, laden_wochenbericht: K,
     sitzungen_team: B, sitzungen_kader: B, pension: V, pension_kasse: V, tagesplan: V,
-    fahrdienst: V, fahrzeuge: V, personal: V, aufgaben: B, dokumente: L, admin: K,
+    fahrdienst: V, fahrzeuge: V, personal: V, zeiterfassung: V, aufgaben: B, dokumente: L, admin: K,
   },
   leitung_laden: {
     start: B, kalender: B, chat: B, laden: V, laden_wochenbericht: B,
     sitzungen_team: B, sitzungen_kader: B, pension: L, pension_kasse: K, tagesplan: K,
-    fahrdienst: L, fahrzeuge: K, personal: V, aufgaben: B, dokumente: L, admin: K,
+    fahrdienst: L, fahrzeuge: K, personal: V, zeiterfassung: V, aufgaben: B, dokumente: L, admin: K,
   },
   verkauf: {
     start: B, kalender: B, chat: B, laden: B, laden_wochenbericht: L,
     sitzungen_team: L, sitzungen_kader: K, pension: L, pension_kasse: K, tagesplan: K,
-    fahrdienst: L, fahrzeuge: K, personal: L, aufgaben: B, dokumente: L, admin: K,
+    fahrdienst: L, fahrzeuge: K, personal: L, zeiterfassung: B, aufgaben: B, dokumente: L, admin: K,
   },
   mitarbeit_pension: {
     start: B, kalender: B, chat: B, laden: K, laden_wochenbericht: K,
     sitzungen_team: L, sitzungen_kader: K, pension: B, pension_kasse: B, tagesplan: B,
-    fahrdienst: B, fahrzeuge: B, personal: L, aufgaben: B, dokumente: L, admin: K,
+    fahrdienst: B, fahrzeuge: B, personal: L, zeiterfassung: B, aufgaben: B, dokumente: L, admin: K,
   },
   fahrdienst: {
     start: B, kalender: B, chat: B, laden: K, laden_wochenbericht: K,
     sitzungen_team: L, sitzungen_kader: K, pension: L, pension_kasse: K, tagesplan: K,
-    fahrdienst: B, fahrzeuge: B, personal: L, aufgaben: B, dokumente: L, admin: K,
+    fahrdienst: B, fahrzeuge: B, personal: L, zeiterfassung: B, aufgaben: B, dokumente: L, admin: K,
   },
 };
 

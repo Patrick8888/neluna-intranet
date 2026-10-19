@@ -161,6 +161,37 @@ describe("Dokumente", () => {
   });
 });
 
+const zeit = (uid: string, w: Record<string, unknown> = {}) => ({
+  mitarbeiterUid: uid, mitarbeiterName: uid, bereich: "laden", datum: "2026-10-19", von: "08:00", bis: "", pause: 0, notiz: "",
+  geaendertVon: "", geaendertName: "", erstellt: "2026-10-19T08:00:00", person: uid, uid, ...w,
+});
+
+describe("Zeiterfassung", () => {
+  it("eigene Zeit stempeln, nicht für andere", async () => {
+    await assertSucceeds(setDoc(doc(als("rahel"), "zeiten/z1"), zeit("rahel")));
+    await assertFails(setDoc(doc(als("rahel"), "zeiten/z2"), zeit("rahel", { mitarbeiterUid: "sina", bereich: "pension" })));
+    await assertFails(setDoc(doc(als("rahel"), "zeiten/z3"), zeit("rahel", { bereich: "pension" })));
+    await assertFails(setDoc(doc(als("rahel"), "zeiten/z4"), zeit("rahel", { bis: "07:00" })));
+    await assertSucceeds(updateDoc(doc(als("rahel"), "zeiten/z1"), { bis: "12:00", geaendertVon: "rahel", geaendertName: "rahel" }));
+    await assertFails(updateDoc(doc(als("rahel"), "zeiten/z1"), { bis: "12:30", geaendertVon: "morena" }));
+  });
+
+  it("die Leitung sieht und korrigiert ihren Bereich, sonst niemand", async () => {
+    await vorbereiten("zeiten/r", zeit("rahel", { bis: "12:00" }));
+    await vorbereiten("zeiten/s", zeit("sina", { bereich: "pension", bis: "12:00" }));
+    await assertSucceeds(getDocs(query(collection(als("morena"), "zeiten"), where("bereich", "==", "laden"))));
+    await assertFails(getDocs(query(collection(als("morena"), "zeiten"), where("bereich", "==", "pension"))));
+    await assertSucceeds(getDocs(query(collection(als("rahel"), "zeiten"), where("mitarbeiterUid", "==", "rahel"))));
+    await assertFails(getDoc(doc(als("rahel"), "zeiten/s")));
+    await assertSucceeds(getDocs(collection(als("nalan"), "zeiten")));
+    await assertSucceeds(updateDoc(doc(als("morena"), "zeiten/r"), { bis: "12:15", geaendertVon: "morena", geaendertName: "morena" }));
+    await assertFails(updateDoc(doc(als("cristina"), "zeiten/r"), { bis: "12:30", geaendertVon: "cristina" }));
+    await assertSucceeds(setDoc(doc(als("cristina"), "zeiten/n"), zeit("cristina", { mitarbeiterUid: "sina", bereich: "pension", bis: "17:00", pause: 30 })));
+    await assertFails(deleteDoc(doc(als("laura"), "zeiten/s")));
+    await assertSucceeds(deleteDoc(doc(als("cristina"), "zeiten/s")));
+  });
+});
+
 describe("Push-Einstellungen", () => {
   it("auch Personal und Aufgaben abschaltbar", async () => {
     await assertSucceeds(setDoc(doc(als("rahel"), "push_einstellungen/rahel"), { personal: false, aufgaben: true }));

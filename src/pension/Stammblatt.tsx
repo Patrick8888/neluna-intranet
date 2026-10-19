@@ -13,7 +13,7 @@ function Zeile({ titel, wert }: { titel: string; wert?: string | null }) {
   );
 }
 
-function HundBlatt({ h }: { h: Hund }) {
+export function HundBlatt({ h }: { h: Hund }) {
   const alter = h.geburtsdatum ? Math.floor((Date.parse(heute()) - Date.parse(h.geburtsdatum)) / (365.25 * 864e5)) : null;
   return (
     <section className="panel sb-block">

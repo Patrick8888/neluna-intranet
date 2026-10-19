@@ -642,6 +642,38 @@ service cloud.firestore {
         || (teamLesen() && resource.data.mitarbeiterUid == request.auth.uid && resource.data.status == 'Beantragt');
     }
 
+    // Zeiterfassung: jede Person erfasst ihre eigene Zeit; wer Ferien freigibt, sieht und korrigiert die Zeiten des Bereichs.
+    function zeitLesen(d) {
+      return teamLesen() && (d.mitarbeiterUid == request.auth.uid
+        || eineVon(['geschaeftsfuehrung'])
+        || (d.bereich == 'laden' && eineVon(['leitung_laden']))
+        || (d.bereich == 'pension' && eineVon(['leitung_pension'])));
+    }
+
+    match /zeiten/{id} {
+      function gueltigeZeit(d) {
+        return d.keys().hasOnly(['mitarbeiterUid', 'mitarbeiterName', 'bereich', 'datum', 'von', 'bis', 'pause', 'notiz',
+            'geaendertVon', 'geaendertName', 'erstellt', 'person', 'uid'])
+          && d.mitarbeiterUid is string && d.mitarbeiterUid.size() > 0 && d.mitarbeiterUid.size() <= 128
+          && d.mitarbeiterName is string && d.mitarbeiterName.size() <= 100
+          && d.bereich in ['laden', 'pension', 'firma']
+          && datumOk(d, 'datum') && uhrzeit(d, 'von')
+          && (d.bis == '' || (uhrzeit(d, 'bis') && d.bis > d.von))
+          && d.pause is int && d.pause >= 0 && d.pause <= 600
+          && text(d, 'notiz', 300) && text(d, 'geaendertVon', 128) && text(d, 'geaendertName', 100);
+      }
+      function zeitSchreiben(d) {
+        return d.mitarbeiterUid == request.auth.uid || abwesenheitFreigeben(d.bereich, d.mitarbeiterUid);
+      }
+      allow read: if zeitLesen(resource.data);
+      allow create: if teamLesen() && vonMir() && gueltigeZeit(request.resource.data) && abwesenheitBereichOk(request.resource.data)
+        && zeitSchreiben(request.resource.data);
+      allow update: if teamLesen() && gueltigeZeit(request.resource.data) && zeitSchreiben(resource.data)
+        && unveraendert(['erstellt', 'person', 'uid', 'mitarbeiterUid', 'bereich'])
+        && request.resource.data.geaendertVon == request.auth.uid;
+      allow delete: if teamLesen() && zeitSchreiben(resource.data);
+    }
+
     // ---------- Aufgaben ----------
 
     match /aufgaben/{id} {

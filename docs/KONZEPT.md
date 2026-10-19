@@ -33,7 +33,7 @@ L = lesen, B = bearbeiten, V = verwalten/freigeben, – = kein Zugriff
 | Startseite, Mitteilungen, Chat, Kalender | V | B | B | B | B |
 | Belegungsplan Hundezimmer | V | V | L | L | B |
 | Hunde- und Kundenkartei | V | V | L | L | L (nur Betreuungsinfos) |
-| Tagesplan Pension (Füttern, Medikamente, Gassi) | V | V | – | – | B |
+| Tagesplan Pension (Füttern, Medikamente) | V | V | – | – | B |
 | Fahrdienstplan | V | V | L | L (eigene Fahrten B) | B (eigene Fahrten) |
 | Fahrzeuge und Unterhalt | V | V | – | – | B (Fahrdienst: Termine und km erfassen) |
 | Ladenbuch: Kasse, Übergabe, Bestellungen, Reklamationen, Loomis | V | – | V | B | – |
@@ -42,6 +42,7 @@ L = lesen, B = bearbeiten, V = verwalten/freigeben, – = kein Zugriff
 | Sitzungsprotokolle Team | V | B | B | L | L |
 | Sitzungsprotokolle Kader | V | B | B | – | – |
 | Dienstplan und Ferien | V | V (Pension) | V (Laden) | L + Antrag | L + Antrag |
+| Zeiterfassung | V | V (Pension) | V (Laden) | B (eigene Zeiten) | B (eigene Zeiten) |
 | Aufgaben / Pendenzen | V | B | B | B | B |
 | Dokumente (Handbuch, Reglemente, Anleitungen) | V | L | L | L | L |
 | Benutzer, Rollen, Einstellungen | V (nur Admin) | – | – | – | – |
@@ -59,12 +60,14 @@ Ein gemeinsamer Kalender mit Ebenen, die sich ein- und ausblenden lassen: Pensio
 ### 3.3 Hundepension (Standort Willisdorf)
 - **Kunden- und Hundekartei:** Halter/in (Kontakt, Notfallkontakt, Tierarzt), Hund (Rasse, Alter, Geschlecht, kastriert, Foto), Impfungen mit Ablaufdatum und Warnung, Futter und Futtermenge, Medikamente, Allergien, Verträglichkeit mit anderen Hunden, Verhalten, Besonderheiten.
 - **Belegungsplan Hundezimmer:** Zeitleiste (Zimmer × Tage) mit Buchungen als Balken, Farben nach Status (Anfrage, bestätigt, eingecheckt, abgeholt). Doppelbelegung wird verhindert bzw. nur erlaubt, wenn das Zimmer mehrere Hunde aufnehmen darf und die Hunde als verträglich markiert sind. Pro Zimmer lässt sich zusätzlich festlegen, wie viele Hunde je Gewichtsklasse Platz haben (bis 25 kg, 25–45 kg, ab 45 kg); gemischt wird anteilig gerechnet. Freie Zimmer für einen Zeitraum suchen.
+- **Kartei nach Hunden (Entscheid 19.10.2026):** die Kartei zeigt zuerst die Hunde (mit Zimmer, Medikamenten, Impfstatus und Halter/in), die Kundschaft ist ein zweiter Reiter. Jeder Hund hat ein eigenes Stammblatt mit Halter/in, Futter, Medikamenten, Verhalten und allen Aufenthalten; Hundenamen im Belegungsplan, im Tagesplan und auf der Übersicht führen direkt dorthin.
+- **Zimmerübersicht:** pro Tag welche Hunde in welchem Zimmer sind, mit Futter, Menge, Fütterungszeiten, Medikamenten und Allergien, dazu ein druckbarer Fütterungs- und Medikamentenplan. Die Übersicht «Heute» zeigt die Zimmer in Kurzform.
 - **Stammblatt:** alle Angaben zu Halter/in und Hund auf einer druckbaren Seite (Kontakt, Telefon 2, Versicherung, Chip, Gewicht, Fütterung, Kommandos, Ängste, Freilauf, Schlafplatz, Spielverhalten, Läufigkeit), mit Unterschriftszeile.
 - **Abrechnung:** Tage pro Hund und Monat (Ferienbetreuung: Nächte und Tage; Tagesbetreuung), mit Betrag und MWST-Anteil, als Tabelle und CSV für die Rechnungen. Teamhunde zählen nicht.
 - **Preise (Entscheid 18.10.2026):** Tagesbetreuung CHF 65.– pro Tag, Übernachtung CHF 20.– pro Nacht, inkl. MWST. Ferien: jeder anwesende Tag (Ankunfts- und Abholtag) als Tagesbetreuung plus jede Nacht, z. B. Freitag bis Sonntag 3 × 65 + 2 × 20 = CHF 235.–. Die Leitung ändert die Preise unter «Abrechnung»; das Buchungsformular schlägt den Preis vor (ohne Fahrdienst).
 - **Teamhunde:** die Hunde von Cristina (Buffy, Yasha, Lou) sowie Patrick und Nalan (Escobar, Benji, Peppy, Mäxi, Lina) sind als Team-Einträge in der Kartei (Entscheid 18.10.2026).
-- **Buchungen:** Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Fahrdienst Hin- und Rückweg, Baden), Preis, Bemerkungen.
-- **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends, Medikamente, Spaziergang, Auffälligkeiten). Wer hat es wann erledigt.
+- **Buchungen:** werden über den Hund erfasst (die Halter/in ergibt sich daraus; weitere Hunde derselben Familie lassen sich dazunehmen). Anfrage → bestätigt → Check-in → Check-out, mit Zimmer, Leistungen (z. B. Fahrdienst Hin- und Rückweg, Baden), Preis, Bemerkungen.
+- **Tagesplan Pension:** pro Tag eine Abhakliste je Hund (Fütterung morgens/abends mit Futter und Menge, Medikamente, Auffälligkeiten; Spaziergänge werden nicht erfasst, Entscheid 19.10.2026). Wer hat es wann erledigt.
 - **Tagesbericht / Übergabe Pension:** wie beim Laden, Pendenzen für die nächste Schicht.
 - **Kassenbuch Pension:** eigenes Kassenbuch für die Pension in Willisdorf, getrennt vom Laden, aber gleich aufgebaut wie das Ladenbuch: Tagesabschluss mit Bar, Karte und TWINT, Bar-Ausgaben, gezähltes Bargeld, Differenz, Wechselgeld, Safebag/Einzahlung und CSV-Export. Zahlungen beim Check-out können direkt aus der Buchung übernommen werden (Hund, Halter/in, Betrag, Zahlungsart); bezahlte Rechnungen (Überweisung) werden separat erfasst und laufen nicht durch die Kasse. Auswertungen für die Geschäftsführung zeigen Laden und Pension getrennt und zusammen. Der Hofladen bei der Pension läuft über dieselbe Kasse: im Abschluss werden seine Verkäufe getrennt nach Futtermittel (MWST 2.6 %) und Zubehör/Spielzeug (8.1 %) erfasst, der Rest ist Pension (8.1 %). Abschluss, Kassenbuch und CSV zeigen Umsatz und MWST je Satz. Der tägliche Kassenabschluss wird in der Pension neu eingeführt (Entscheid 18.10.2026); das Intranet führt deshalb Schritt für Schritt durch den Abschluss und erinnert am Abend, wenn er fehlt.
 
@@ -85,6 +88,8 @@ Die sieben Bereiche des Ladenbuchs werden 1:1 übernommen: Kassenbuch (Tagesabsc
 - **Profile:** Foto, Funktion, Pensum, Kontakt, Rollen.
 - **Dienstplan:** Wochenplan je Bereich (Laden, Pension, Fahrdienst): Personen als Zeilen, Dienste mit Beginn, Ende und Notiz, Stunden pro Person und Woche, «Vorwoche übernehmen». Den Laden plant die Leitung Laden, Pension und Fahrdienst die Leitung Pension, die Geschäftsführung alles. Alle sehen die Pläne und unter «Meine Dienste» die eigenen; der Dienst des Tages steht auf der Startseite.
 - **Ferien und Abwesenheiten:** Antrag → Freigabe (Laden: Morena mit Rücksprache Nel; Pension und Fahrdienst: Cristina; Geschäftsführung untereinander; Leitungen nie die eigenen), erscheint bewilligt im Kalender und im Dienstplan. Wer freigibt, trägt auch direkt ein (z. B. Krankheit). Krankheit und Unfall sehen nur die Person selbst und wer freigibt; alle anderen sehen «Abwesend». Ferientage werden Montag bis Freitag gezählt.
+
+- **Zeiterfassung (Entscheid 19.10.2026: Pflicht):** Jede Person stempelt auf der Startseite oder unter Personal ein und aus; vergessene Zeiten werden nachgetragen. Beim Ausstempeln wird die Pause nach Arbeitsgesetz vorgeschlagen (über 5½ Std. Arbeit 15 Min., über 7 Std. 30 Min., über 9 Std. 1 Std.), zu kurze Pausen sind markiert. Monatsübersicht mit gearbeiteten Stunden, Soll aus dem Dienstplan und Differenz. Die Leitung Laden sieht und korrigiert die Zeiten des Ladens, die Leitung Pension die von Pension und Fahrdienst, die Geschäftsführung alle; Korrekturen sind mit Namen markiert. CSV-Export pro Monat für den Lohn.
 
 ### 3.8 Aufgaben und Pendenzen
 Einfache Aufgabenliste mit verantwortlicher Person (oder «wer gerade Zeit hat»), Fälligkeit und Bereich; wiederkehrende Aufgaben (täglich bis jährlich, z. B. Reinigungsplan, Inventur, Impfausweise prüfen) rücken beim Abhaken auf den nächsten Termin vor. Alle erfassen und haken ab; ändern dürfen Ersteller/in, Zuständige und Geschäftsführung. Eigene fällige Aufgaben stehen auf der Startseite und als Zähler in der Navigation.
@@ -122,6 +127,7 @@ nachricht       id, kanal_id, absender_id, text, anhang, zeit
 
 dienst          id, benutzer_id, datum, von, bis, bereich
 abwesenheit     id, benutzer_id, von, bis, art, status, freigegeben_von
+zeiten          id, mitarbeiter_uid, bereich, datum, von, bis, pause, notiz, geaendert_von
 aufgabe         id, titel, bereich, verantwortlich_id, faellig, wiederholung, erledigt
 dokument        id, titel, datei, kategorie;   mitteilung   id, titel, text, gelesen_von[]
 
@@ -168,7 +174,7 @@ Patrick hat am 18.10.2026 entschieden: Das Intranet wird wie das Salonbuch (haar
 | **2 – Pension** | Kunden- und Hundekartei, Zimmer, Buchungen, Belegungsplan, Tagesplan, Kassenbuch Pension | Cristina plant die Pension im Intranet |
 | **3 – Fahrdienst und Kalender** | Fahrten aus Buchungen, Fahreransicht, Fahrzeuge mit Garagen- und Unterhaltsterminen, gemeinsamer Kalender | Ein Kalender für alles |
 | **4 – Kommunikation** | Chat, Mitteilungen, Push-Benachrichtigungen | WhatsApp-Gruppen werden überflüssig |
-| **5 – Personal und Organisation** | Dienstplan, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
+| **5 – Personal und Organisation** | Dienstplan, Zeiterfassung, Ferien, Aufgaben, Dokumente | Vollständiges Intranet |
 | **später (Ideen)** | Online-Buchungsanfrage für Kundschaft, Rechnungen Pension, Impf-Erinnerungen per E-Mail, Auswertungen | – |
 
 Jede Phase wird in einem eigenen Thread mit Claude Code umgesetzt, als Pull Request im Repository, und erst nach Patricks Freigabe live geschaltet.

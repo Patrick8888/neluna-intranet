@@ -6,7 +6,7 @@ import { db } from "../firebase";
 import { useIch } from "../auth";
 import { datum, heute, zeitstempel } from "../lib/format";
 import {
-  GESCHLECHTER, GEWICHTSKLASSEN, IMPF_ARTEN, impfWarnungen, klasseAusGewicht, klassenName, TEAMHUNDE, type Gewichtsklasse, type Hund, type Impfung, type Kunde,
+  aufenthaltVon, GESCHLECHTER, GEWICHTSKLASSEN, IMPF_ARTEN, impfWarnungen, istDa, klasseAusGewicht, klassenName, TEAMHUNDE, type Gewichtsklasse, type Hund, type Impfung, type Kunde,
 } from "../lib/pension";
 import { darf, STUFE } from "../lib/rollen";
 import { LoeschKnopf, speichern, useAngezeigt, useToast } from "../ui";
@@ -205,6 +205,7 @@ function KundeDetail({ kundeId, darfBearbeiten }: { kundeId: string; darfBearbei
                   {!h.vertraeglich && <span className="pill bad" style={{ marginLeft: 8 }}>nicht verträglich</span>}
                   {impfWarnungen(h, heute(), heute()).length > 0 && <span className="pill warn" style={{ marginLeft: 8 }}>Impfung prüfen</span>}
                 </summary>
+                <div className="actions"><Link className="btn ghost small" to={`/pension/hund/${h.id}`}>Stammblatt {h.name}</Link></div>
                 <HundFormular kundeId={kunde.id} vorhanden={h} darfBearbeiten={darfBearbeiten} zeigen={zeigen} />
               </details>
             ))}
@@ -278,7 +279,12 @@ export function Kartei() {
   const verwalten = darf(ich.rollen, "pension", STUFE.verwalten);
   const { zeigen, element } = useToast();
   const offen = params.get("kunde");
+  const [ansicht, setAnsicht] = useState<"hunde" | "kunden">("hunde");
   const s = suche.trim().toLowerCase();
+  const hundTreffer = d.hunde
+    .map((h) => ({ h, k: d.kunden.find((k) => k.id === h.kundeId) }))
+    .filter(({ h, k }) => !s || `${h.name} ${h.rasse} ${h.chipnummer ?? ""} ${k?.name ?? ""} ${k?.telefon ?? ""}`.toLowerCase().includes(s))
+    .sort((a, b) => a.h.name.localeCompare(b.h.name, "de"));
   const treffer = d.kunden.filter((k) => {
     if (!s) return true;
     const hunde = d.hunde.filter((h) => h.kundeId === k.id).map((h) => h.name).join(" ");
@@ -294,7 +300,37 @@ export function Kartei() {
           <h2 id="h-ka">Kartei</h2>
           {darfBearbeiten && <button type="button" className="btn small" onClick={() => { setParams({ kunde: "neu" }); window.scrollTo({ top: 0, behavior: "smooth" }); }}>Neue Kundin / neuer Kunde</button>}
         </div>
-        <input type="search" aria-label="Suchen" placeholder="Suchen nach Name, Telefon oder Hund" value={suche} onChange={(e) => setSuche(e.target.value)} />
+        <div className="filters">
+          <button type="button" className="chip" aria-pressed={ansicht === "hunde"} onClick={() => setAnsicht("hunde")}>Hunde ({d.hunde.length})</button>
+          <button type="button" className="chip" aria-pressed={ansicht === "kunden"} onClick={() => setAnsicht("kunden")}>Kundschaft ({d.kunden.length})</button>
+        </div>
+        <input type="search" aria-label="Suchen" placeholder="Suchen nach Hund, Rasse, Halter/in oder Telefon" value={suche} onChange={(e) => setSuche(e.target.value)} />
+        {ansicht === "hunde" ? (
+          <div className="list">
+            {hundTreffer.length ? hundTreffer.slice(0, 200).map(({ h, k }) => {
+              const jetzt = aufenthaltVon(d.buchungen, h.id, heute());
+              const da = jetzt && istDa(jetzt, heute());
+              return (
+                <Link key={h.id} to={`/pension/hund/${h.id}`} className="item hund-eintrag">
+                  <div className="item-row">
+                    <strong>{h.name}</strong>
+                    <span className="actions">
+                      {da && <span className="pill good">{d.zimmer.find((z) => z.id === jetzt.zimmerId)?.name}</span>}
+                      {!da && jetzt && <span className="pill acc">ab {datum(jetzt.von)}</span>}
+                      {h.medikamente && <span className="pill bad">Medikamente</span>}
+                      {!h.vertraeglich && <span className="pill bad">nicht verträglich</span>}
+                      {impfWarnungen(h, heute(), heute()).length > 0 && <span className="pill warn">Impfung prüfen</span>}
+                    </span>
+                  </div>
+                  <div className="meta">
+                    {[h.rasse, klassenName(h.gewichtsklasse)].filter(Boolean).map((x) => <span key={x}>{x}</span>)}
+                    <span>{k?.name ?? "ohne Halter/in"}{k?.team ? " (Team)" : ""}</span>
+                  </div>
+                </Link>
+              );
+            }) : <div className="empty">{d.hunde.length ? "Nichts gefunden." : "Noch kein Hund erfasst. Zuerst die Kundin oder den Kunden anlegen, dann den Hund."}</div>}
+          </div>
+        ) : (
         <div className="list">
           {treffer.length ? treffer.slice(0, 100).map((k) => {
             const hunde = d.hunde.filter((h) => h.kundeId === k.id);
@@ -306,13 +342,14 @@ export function Kartei() {
                 </div>
                 <div className="meta">
                   {k.telefon && <a href={`tel:${k.telefon.replace(/\s/g, "")}`}>{k.telefon}</a>}
-                  {hunde.map((h) => <span key={h.id} className="pill">{h.name}</span>)}
+                  {hunde.map((h) => <Link key={h.id} to={`/pension/hund/${h.id}`} className="pill">{h.name}</Link>)}
                   {!hunde.length && <span>noch kein Hund erfasst</span>}
                 </div>
               </article>
             );
           }) : <div className="empty">{d.kunden.length ? "Nichts gefunden." : "Noch keine Kundschaft erfasst. Die erste Kundin oder den ersten Kunden oben anlegen."}</div>}
         </div>
+        )}
       </section>
       {element}
     </>

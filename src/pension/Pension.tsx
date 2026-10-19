@@ -21,6 +21,7 @@ function Unternavigation({ team, tagesplan, kasse }: { team: boolean; tagesplan:
   const bereiche = [
     { pfad: "heute", titel: "Übersicht", zeigen: true },
     { pfad: "belegung", titel: "Belegung", zeigen: true },
+    { pfad: "zimmer", titel: "Zimmer", zeigen: true },
     { pfad: "kartei", titel: "Kartei", zeigen: true },
     { pfad: "tagesplan", titel: "Tagesplan", zeigen: tagesplan },
     { pfad: "uebergabe", titel: "Übergabe", zeigen: team },

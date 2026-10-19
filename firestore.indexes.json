@@ -15,6 +15,22 @@
         { "fieldPath": "mitarbeiterUid", "order": "ASCENDING" },
         { "fieldPath": "datum", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "zeiten",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mitarbeiterUid", "order": "ASCENDING" },
+        { "fieldPath": "datum", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "zeiten",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "bereich", "order": "ASCENDING" },
+        { "fieldPath": "datum", "order": "ASCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []
