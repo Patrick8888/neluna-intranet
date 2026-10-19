@@ -11,6 +11,7 @@ import { darf, STUFE, type Modul } from "../lib/rollen";
 import { FahrdienstProvider, useFahrdienst } from "../fahrdienst/daten";
 import { PensionProvider, usePension } from "../pension/daten";
 import { LoeschKnopf, speichern, useToast } from "../ui";
+import { artFuer, type Abwesenheit } from "../lib/personal";
 
 const WOCHENTAGE = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 const klasse = (e: Ebene) => `ebene-${e.toLowerCase()}`;
@@ -18,24 +19,25 @@ const klasse = (e: Ebene) => `ebene-${e.toLowerCase()}`;
 /** Welche Ebene wer sieht: die aus den Modulen nur mit Leserecht auf das Modul. */
 const EBENE_MODUL: Partial<Record<Ebene, Modul>> = { Pension: "pension", Fahrdienst: "fahrdienst", Fahrzeuge: "fahrzeuge", Sitzungen: "sitzungen_team" };
 
-function useListe<T>(sammlung: string, aktiv: boolean, abbilden: (id: string, d: Record<string, unknown>) => T): [T[], string] {
+function useListe<T>(sammlung: string, aktiv: boolean, abbilden: (id: string, d: Record<string, unknown>) => T, feld = "datum"): [T[], string] {
   const [liste, setListe] = useState<T[]>([]);
   const [fehler, setFehler] = useState("");
   useEffect(() => {
     if (!aktiv) return;
     return onSnapshot(
-      query(collection(db, sammlung), orderBy("datum", "desc"), limit(1500)),
+      query(collection(db, sammlung), orderBy(feld, "desc"), limit(1500)),
       (snap) => setListe(snap.docs.map((x) => abbilden(x.id, x.data()))),
       (err) => setFehler(meldung(err)),
     );
     // abbilden ist pro Sammlung fest.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sammlung, aktiv]);
+  }, [sammlung, aktiv, feld]);
   return [liste, fehler];
 }
 
 const alsTermin = (id: string, d: Record<string, unknown>) => ({ id, ...d }) as Termin;
 const alsTeam = (id: string, d: Record<string, unknown>): Sitzung => ({ id, art: "Teamsitzung", datum: String(d.datum ?? ""), zeit: String(d.zeit ?? ""), ort: String(d.ort ?? "") });
+const alsAbwesenheit = (id: string, d: Record<string, unknown>) => ({ id, ...d }) as Abwesenheit;
 const alsKader = (id: string, d: Record<string, unknown>): Sitzung => ({ ...alsTeam(id, d), art: "Kadersitzung" });
 
 type Werte = Omit<Termin, "id" | "erstellt" | "person" | "uid">;
@@ -110,12 +112,16 @@ function Ansicht() {
   const [termine, fehlerT] = useListe("termine", true, alsTermin);
   const [team] = useListe("sitzungen_team", darf(ich.rollen, "sitzungen_team"), alsTeam);
   const [kader] = useListe("sitzungen_kader", darf(ich.rollen, "sitzungen_kader"), alsKader);
+  const [abwesenheiten] = useListe("abwesenheiten", darf(ich.rollen, "personal"), alsAbwesenheit, "von");
   const bearbeiten = darf(ich.rollen, "kalender", STUFE.bearbeiten);
 
   const monat = tag.slice(0, 7);
   const raster = modus === "monat" ? monatsRaster(monat) : Array.from({ length: 7 }, (_, i) => plusTage(montagVon(tag), i));
   const alle = kalenderEintraege(
-    { termine, buchungen: p.buchungen, fahrten: f.fahrten, fahrzeugTermine: f.termine, fahrzeuge: f.fahrzeuge, sitzungen: [...team, ...kader] },
+    {
+      termine, buchungen: p.buchungen, fahrten: f.fahrten, fahrzeugTermine: f.termine, fahrzeuge: f.fahrzeuge, sitzungen: [...team, ...kader],
+      abwesenheiten: abwesenheiten.filter((a) => a.status === "Bewilligt").map((a) => ({ id: a.id, name: a.mitarbeiterName, art: artFuer(a, ich.rollen, ich.uid), von: a.von, bis: a.bis })),
+    },
     raster[0], raster[raster.length - 1],
   ).filter((e) => ebenen.includes(e.ebene));
   const amTag = (t: string) => alle.filter((e) => e.datum === t);

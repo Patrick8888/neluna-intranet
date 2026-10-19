@@ -11,6 +11,9 @@ import { offeneMitteilungen } from "../lib/chat";
 import { MitteilungKarte } from "../chat/Mitteilungen";
 import { useKommunikation } from "../chat/daten";
 import { useToast } from "../ui";
+import { DIENST_BEREICHE } from "../lib/personal";
+import { AufgabeZeile } from "../aufgaben/Aufgaben";
+import { useDiensteHeute, useMeineAufgaben, useOffeneAntraege } from "./arbeit";
 
 /** Abends erinnern, wenn der Kassenabschluss der Pension fehlt (er ist dort neu). */
 function KassenErinnerung({ stunde }: { stunde: number }) {
@@ -101,6 +104,40 @@ function Neues() {
   );
 }
 
+/** Eigene Dienste von heute, fällige Aufgaben und offene Ferienanträge. */
+function Arbeit() {
+  const dienste = useDiensteHeute();
+  const aufgaben = useMeineAufgaben();
+  const antraege = useOffeneAntraege();
+  const { zeigen, element } = useToast();
+  if (!dienste.length && !aufgaben.length && !antraege.length) return null;
+  return (
+    <section className="panel" aria-labelledby="h-arbeit">
+      <h2 id="h-arbeit">Dein Tag</h2>
+      {dienste.length > 0 && (
+        <p className="notice good">
+          Dienst heute: {dienste.map((d) => `${d.von}–${d.bis} ${DIENST_BEREICHE[d.bereich]}${d.notiz ? ` (${d.notiz})` : ""}`).join(", ")}
+        </p>
+      )}
+      {antraege.length > 0 && (
+        <Link to="/personal/abwesenheiten" className="notice">
+          {antraege.length === 1 ? `Ferienantrag von ${antraege[0].mitarbeiterName} wartet auf dich` : `${antraege.length} Ferienanträge warten auf dich`}
+        </Link>
+      )}
+      {aufgaben.length > 0 && (
+        <>
+          <div className="panel-head">
+            <div className="lbl">Deine Aufgaben bis heute</div>
+            <Link className="btn ghost small" to="/aufgaben">Alle Aufgaben</Link>
+          </div>
+          <div className="list">{aufgaben.map((a) => <AufgabeZeile key={a.id} a={a} zeigen={zeigen} />)}</div>
+        </>
+      )}
+      {element}
+    </section>
+  );
+}
+
 function begruessung(stunde: number) {
   if (stunde < 11) return "Guten Morgen";
   if (stunde < 17) return "Guten Tag";
@@ -132,6 +169,7 @@ export function Start() {
       </section>
 
       {darf(ich.rollen, "chat") && <Neues />}
+      <Arbeit />
       {darf(ich.rollen, "fahrdienst") && <MeineFahrten />}
       {darf(ich.rollen, "fahrzeuge", STUFE.bearbeiten) && <FaelligeTermine />}
 

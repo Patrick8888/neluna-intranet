@@ -58,7 +58,7 @@ Anschliessend unter **Verwaltung → Benutzer** das Team anlegen. Jede Person be
 
 ## 8. Push-Nachrichten (Blaze-Tarif)
 
-Push-Nachrichten aufs Handy (Chat, Mitteilungen, eigene Fahrten) verschickt eine kleine Server-Funktion. Diese gibt es bei Firebase nur im **Blaze-Tarif** (Abrechnung nach Verbrauch; für das Team voraussichtlich gratis, sonst wenige Franken im Monat). Entscheid 18.10.2026: umstellen.
+Push-Nachrichten aufs Handy (Chat, Mitteilungen, eigene Fahrten, Ferienanträge und Entscheide, neu zugeteilte Aufgaben) verschickt eine kleine Server-Funktion. Diese gibt es bei Firebase nur im **Blaze-Tarif** (Abrechnung nach Verbrauch; für das Team voraussichtlich gratis, sonst wenige Franken im Monat). Entscheid 18.10.2026: umstellen.
 
 1. **Tarif umstellen:** Firebase-Konsole → unten links **Spark** (oder Zahnrad → **Nutzung und Abrechnung**) → **Tarif ändern** → **Blaze**. Ein Rechnungskonto mit Kreditkarte anlegen.
 2. **Budget-Alarm:** Beim Umstellen fragt Firebase nach einem Budget, sonst in der Google-Cloud-Konsole unter **Abrechnung → Budgets und Benachrichtigungen → Budget erstellen**: Betrag **CHF 5**, Benachrichtigungen bei 50 %, 90 % und 100 % an die NeLuna-Adresse. Der Alarm schickt eine E-Mail, er stoppt nichts.
@@ -66,7 +66,7 @@ Push-Nachrichten aufs Handy (Chat, Mitteilungen, eigene Fahrten) verschickt eine
 4. **Server-Funktion hochladen** mit `npm run deploy:push` (nach `npm run deploy`, das die App aktualisiert). Beim ersten Mal schaltet die Firebase-CLI die nötigen Google-Dienste ein (Cloud Functions, Cloud Build, Artifact Registry, Eventarc); das dauert einige Minuten. Fragt sie nach einer **Bereinigungsrichtlinie für Container-Images** (cleanup policy), mit **Ja** und 1 Tag antworten, damit keine alten Versionen Speicherkosten verursachen. Meldet der allererste Deploy einen Fehler zu Eventarc-Berechtigungen, ein paar Minuten warten und nochmals `npm run deploy:push`. Danach genügt bei Änderungen an `functions/` wieder `npm run deploy:push`.
 5. **Auf jedem Handy einschalten:** im Pfötli Buch **Profil → Push-Nachrichten auf diesem Gerät einschalten** und die Frage des Browsers mit «Erlauben» beantworten. Auf dem **iPhone** zuerst in Safari **Teilen → Zum Home-Bildschirm** und das Pfötli Buch von dort öffnen (iOS 16.4 oder neuer), sonst bietet Apple keine Push-Nachrichten an.
 
-Im Profil wählt jede Person, wofür sie Push-Nachrichten will (Gruppen-Chats, Direktnachrichten, Mitteilungen, eigene Fahrten). Beim Abmelden bekommt das Gerät keine mehr.
+Im Profil wählt jede Person, wofür sie Push-Nachrichten will (Gruppen-Chats, Direktnachrichten, Mitteilungen, eigene Fahrten, Ferienanträge, Aufgaben). Beim Abmelden bekommt das Gerät keine mehr.
 
 ## Kosten
 

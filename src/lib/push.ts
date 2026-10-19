@@ -1,6 +1,8 @@
 // Wer bekommt welche Push-Nachricht? Reine Logik, die App und Server-Funktion teilen.
 import { dmPartner, GRUPPEN } from "./chat";
 import { datum } from "./format";
+import { darfFreigeben, werktage, type Abwesenheit } from "./personal";
+import type { Rolle } from "./rollen";
 
 /** Arten von Push-Nachrichten; jede Person kann jede Art auf ihren Geräten abschalten. */
 export const PUSH_ARTEN = {
@@ -8,6 +10,8 @@ export const PUSH_ARTEN = {
   direkt: "Direktnachrichten",
   mitteilungen: "Mitteilungen der Geschäftsführung",
   fahrten: "Eigene Fahrten (neu, geändert, abgesagt)",
+  personal: "Ferienanträge und Entscheide",
+  aufgaben: "Neue Aufgaben für dich",
 } as const;
 
 export type PushArt = keyof typeof PUSH_ARTEN;
@@ -59,4 +63,38 @@ export function fahrtPush(id: string, vorher: FahrtDaten | undefined, nachher: F
   if (nachher.status === "Abgesagt" && vorher?.status !== "Abgesagt") return nachricht("Fahrt abgesagt", `${wann} · ${was}`);
   if (nachher.status !== "Abgesagt" && (vorher?.datum !== nachher.datum || (vorher?.zeit ?? "") !== (nachher.zeit ?? ""))) return nachricht("Fahrt verschoben", `Neu ${wann} · ${was}`);
   return null;
+}
+
+type AbwesenheitDaten = Partial<Omit<Abwesenheit, "id">>;
+
+const zeitraum = (a: AbwesenheitDaten) =>
+  a.von === a.bis ? datum(a.von) : `${datum(a.von).slice(0, 6)}–${datum(a.bis)} (${werktage(a.von ?? "", a.bis ?? "")} Arbeitstage)`;
+
+/**
+ * Neuer Antrag: an alle, die ihn bewilligen dürfen. Entscheid: an die Person, die beantragt hat.
+ * Krankheit und Unfall erscheinen in der Nachricht nur als «Abwesenheit».
+ */
+export function abwesenheitPush(vorher: AbwesenheitDaten | undefined, nachher: AbwesenheitDaten | undefined, team: PushPerson[]): { uids: string[]; nachricht: PushNachricht } | null {
+  if (!nachher?.mitarbeiterUid || !nachher.bereich) return null;
+  const art = nachher.art === "Krank" || nachher.art === "Unfall" ? "Abwesenheit" : nachher.art ?? "Abwesenheit";
+  const link = "/personal/abwesenheiten";
+  if (!vorher && nachher.status === "Beantragt") {
+    const a = { bereich: nachher.bereich, mitarbeiterUid: nachher.mitarbeiterUid };
+    const uids = team.filter((p) => p.uid !== nachher.mitarbeiterUid && darfFreigeben(p.rollen as Rolle[], p.uid, a)).map((p) => p.uid);
+    return { uids, nachricht: { titel: `Antrag ${art}: ${nachher.mitarbeiterName ?? ""}`.trim(), text: zeitraum(nachher), link, tag: "abwesenheit-antrag" } };
+  }
+  if (vorher?.status === "Beantragt" && (nachher.status === "Bewilligt" || nachher.status === "Abgelehnt") && nachher.entscheidUid !== nachher.mitarbeiterUid) {
+    const text = [zeitraum(nachher), nachher.antwort].filter(Boolean).join(" · ");
+    return { uids: [nachher.mitarbeiterUid], nachricht: { titel: `${art} ${nachher.status === "Bewilligt" ? "bewilligt" : "abgelehnt"}`, text, link, tag: "abwesenheit-entscheid" } };
+  }
+  return null;
+}
+
+type AufgabeDaten = { titel?: string; zustaendigUid?: string; faellig?: string; person?: string; uid?: string; erledigt?: boolean };
+
+/** Meldung an die zuständige Person, wenn ihr jemand anderes eine Aufgabe neu zuteilt. */
+export function aufgabePush(id: string, vorher: AufgabeDaten | undefined, nachher: AufgabeDaten | undefined): { uid: string; nachricht: PushNachricht } | null {
+  if (!nachher?.zustaendigUid || nachher.erledigt || vorher?.zustaendigUid === nachher.zustaendigUid || nachher.zustaendigUid === nachher.uid) return null;
+  const text = [nachher.faellig ? `fällig ${datum(nachher.faellig)}` : "", nachher.person ? `von ${nachher.person}` : ""].filter(Boolean).join(" · ");
+  return { uid: nachher.zustaendigUid, nachricht: { titel: `Aufgabe: ${nachher.titel ?? ""}`, text, link: "/aufgaben", tag: `aufgabe_${id}` } };
 }

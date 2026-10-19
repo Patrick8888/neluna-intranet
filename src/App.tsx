@@ -30,6 +30,11 @@ import { FahrdienstPlan } from "./fahrdienst/Plan";
 import { Kalender } from "./kalender/Kalender";
 import { Chat } from "./chat/Chat";
 import { Mitteilungen } from "./chat/Mitteilungen";
+import { Personal } from "./personal/Personal";
+import { Dienstplan } from "./personal/Dienstplan";
+import { Abwesenheiten } from "./personal/Abwesenheiten";
+import { Aufgaben } from "./aufgaben/Aufgaben";
+import { Dokumente } from "./dokumente/Dokumente";
 
 /** Zeigt die Seite nur mit genügender Berechtigung (die Datenbankregeln prüfen zusätzlich). */
 function Berechtigt({ modul, mindestens = STUFE.lesen, children }: { modul: Modul; mindestens?: Stufe; children: ReactNode }) {
@@ -86,6 +91,13 @@ function Inhalt() {
           <Route path="fahrzeuge" element={<Berechtigt modul="fahrzeuge"><Fahrzeuge /></Berechtigt>} />
         </Route>
         <Route path="kalender" element={<Berechtigt modul="kalender"><Kalender /></Berechtigt>} />
+        <Route path="personal" element={<Berechtigt modul="personal"><Personal /></Berechtigt>}>
+          <Route index element={<Navigate to="dienstplan" replace />} />
+          <Route path="dienstplan" element={<Dienstplan />} />
+          <Route path="abwesenheiten" element={<Abwesenheiten />} />
+        </Route>
+        <Route path="aufgaben" element={<Berechtigt modul="aufgaben"><Aufgaben /></Berechtigt>} />
+        <Route path="dokumente" element={<Berechtigt modul="dokumente"><Dokumente /></Berechtigt>} />
         <Route path="sitzungen" element={<Berechtigt modul="sitzungen_team"><Sitzungen /></Berechtigt>} />
         <Route path="admin/benutzer" element={<Berechtigt modul="admin" mindestens={STUFE.verwalten}><BenutzerVerwaltung /></Berechtigt>} />
         <Route path="admin/import" element={<Berechtigt modul="admin" mindestens={STUFE.verwalten}><Import /></Berechtigt>} />

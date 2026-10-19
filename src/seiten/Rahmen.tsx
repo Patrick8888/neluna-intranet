@@ -6,6 +6,7 @@ import { BEREICHE } from "../lib/navigation";
 import { darf } from "../lib/rollen";
 import { KommunikationProvider, useKommunikation } from "../chat/daten";
 import { pushAusschalten } from "../push";
+import { useMeineAufgaben, useOffeneAntraege } from "./arbeit";
 
 export function Rahmen() {
   return (
@@ -18,7 +19,11 @@ export function Rahmen() {
 function Inhalt() {
   const ich = useIch();
   const k = useKommunikation();
-  const zaehler: Record<string, number> = { "/chat": k.ungeleseneChats, "/mitteilungen": k.offeneMitteilungen };
+  const aufgaben = useMeineAufgaben();
+  const antraege = useOffeneAntraege();
+  const zaehler: Record<string, number> = {
+    "/chat": k.ungeleseneChats, "/mitteilungen": k.offeneMitteilungen, "/aufgaben": aufgaben.length, "/personal": antraege.length,
+  };
   const eintraege = [
     { titel: "Heute", pfad: "/" },
     ...BEREICHE.filter((x) => x.pfad && darf(ich.rollen, x.modul)).map((x) => ({ titel: x.titel, pfad: x.pfad! })),
