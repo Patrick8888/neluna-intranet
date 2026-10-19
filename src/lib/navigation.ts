@@ -14,7 +14,7 @@ export const BEREICHE: Bereich[] = [
   { modul: "laden", titel: "Laden", beschreibung: "Kassenbuch, Übergabe, Bestellungen, Reklamationen, Loomis, Wochenbericht", pfad: "/laden" },
   { modul: "sitzungen_team", titel: "Sitzungen", beschreibung: "Protokolle und Pendenzen der Team- und Kadersitzungen", pfad: "/sitzungen" },
   { modul: "pension", titel: "Hundepension", beschreibung: "Belegungsplan, Buchungen, Hunde- und Kundenkartei, Kassenbuch Willisdorf", pfad: "/pension" },
-  { modul: "tagesplan", titel: "Tagesplan", beschreibung: "Füttern, Medikamente, Spaziergänge abhaken", pfad: "/pension/tagesplan" },
+  { modul: "tagesplan", titel: "Tagesplan", beschreibung: "Füttern und Medikamente abhaken", pfad: "/pension/tagesplan" },
   { modul: "fahrdienst", titel: "Fahrdienst", beschreibung: "Abhol- und Bringfahrten, Fahrzeuge und Garagentermine", pfad: "/fahrdienst" },
   { modul: "kalender", titel: "Kalender", beschreibung: "Pension, Laden, Fahrten, Ferien, Sitzungen", pfad: "/kalender" },
   { modul: "chat", titel: "Chat", beschreibung: "Gruppen und Direktnachrichten, mit Fotos", pfad: "/chat" },
